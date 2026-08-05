@@ -136,6 +136,26 @@ h3 {
   line-height: 1.45;
 }
 
+.settings-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  margin-top: 14px;
+  border: 1px solid rgba(15, 118, 110, 0.22);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--primary);
+  padding: 0 13px;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: var(--shadow-soft);
+}
+
+.settings-link:hover {
+  background: var(--primary-soft);
+}
+
 .search-panel,
 .results-section {
   border: 1px solid var(--line);
@@ -323,6 +343,85 @@ select:focus {
   justify-content: flex-end;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.settings-actions.left {
+  grid-column: auto;
+  justify-content: flex-start;
+}
+
+.settings-page-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(260px, 1fr);
+  gap: 18px;
+  align-items: start;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.settings-copy {
+  min-width: 0;
+}
+
+.settings-controls,
+.settings-add-card {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-add-card {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+.settings-controls label,
+.settings-add-card label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.sheet-list {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.sheet-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+}
+
+.sheet-item strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sheet-badge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--completed-bg);
+  color: var(--completed-text);
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sheet-badge.protected {
+  background: #fef2f2;
+  color: var(--danger);
 }
 
 .primary-button.is-loading::after {
@@ -582,6 +681,7 @@ select:focus {
 
   .search-panel,
   .search-row,
+  .settings-page-panel,
   .settings-body,
   .settings-row,
   .result-card-header {
@@ -628,5 +728,10 @@ select:focus {
 
   .settings-actions button {
     width: 100%;
+  }
+
+  .sheet-item {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

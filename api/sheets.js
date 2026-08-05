@@ -1,12 +1,13 @@
 import {
-  PROTECTED_SHEET_NAMES,
   SPREADSHEET_ID,
   getPublicError,
-  getSheetsClient
+  getSheetsClient,
+  isProtectedSheetName
 } from './_sheets.js';
 
 export default async function handler(req, res) {
   try {
+    res.setHeader('Cache-Control', 'no-store');
     const sheets = await getSheetsClient();
 
     if (req.method === 'GET') {
@@ -15,10 +16,17 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const name = String(req.body.name || '').trim();
+      const name = String(req.body?.name || '').trim();
 
       if (!name) {
         return res.status(400).json({ error: 'Sayfa adı zorunlu.' });
+      }
+
+      const sheetList = await getSheetList(sheets);
+      const exists = sheetList.some((sheet) => sheet.name.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR'));
+
+      if (exists) {
+        return res.status(400).json({ error: `${name} sayfası zaten var.` });
       }
 
       await sheets.spreadsheets.batchUpdate({
@@ -36,18 +44,18 @@ export default async function handler(req, res) {
         }
       });
 
-      const sheetList = await getSheetList(sheets);
-      return res.status(200).json({ ok: true, sheets: sheetList, message: `${name} sayfası eklendi.` });
+      const updatedSheetList = await getSheetList(sheets);
+      return res.status(200).json({ ok: true, sheets: updatedSheetList, message: `${name} sayfası eklendi.` });
     }
 
     if (req.method === 'DELETE') {
-      const name = String(req.query.name || '').trim();
+      const name = getDeleteName(req);
 
       if (!name) {
         return res.status(400).json({ error: 'Silinecek sayfa adı zorunlu.' });
       }
 
-      if (PROTECTED_SHEET_NAMES.includes(name)) {
+      if (isProtectedSheetName(name)) {
         return res.status(400).json({ error: `${name} sayfası korunuyor, silinemez.` });
       }
 
@@ -56,6 +64,10 @@ export default async function handler(req, res) {
 
       if (!target) {
         return res.status(404).json({ error: 'Sayfa bulunamadı.' });
+      }
+
+      if (sheetList.length <= 1) {
+        return res.status(400).json({ error: 'Son sayfa silinemez.' });
       }
 
       await sheets.spreadsheets.batchUpdate({
@@ -92,7 +104,20 @@ async function getSheetList(sheets) {
     .map((sheet) => ({
       id: sheet.properties.sheetId,
       name: sheet.properties.title,
-      protected: PROTECTED_SHEET_NAMES.includes(sheet.properties.title)
+      protected: isProtectedSheetName(sheet.properties.title)
     }))
     .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+}
+
+function getDeleteName(req) {
+  if (req.query?.name) {
+    return String(req.query.name).trim();
+  }
+
+  try {
+    const url = new URL(req.url || '', 'http://localhost');
+    return String(url.searchParams.get('name') || '').trim();
+  } catch {
+    return '';
+  }
 }

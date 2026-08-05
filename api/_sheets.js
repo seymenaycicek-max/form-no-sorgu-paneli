@@ -1,12 +1,6 @@
 import { google } from 'googleapis';
 
 export const SPREADSHEET_ID = process.env.SPREADSHEET_ID || '';
-export const SEARCH_SHEET_NAMES = [
-  'AĞUSTOS',
-  'Renk Değişenler',
-  'TEMMUZ',
-  'Renk Değişenler TEMMUZ'
-];
 export const PROTECTED_SHEET_NAMES = ['TOPLAM'];
 
 export const COL = {
@@ -39,8 +33,15 @@ export async function getSheetsClient() {
 
 export async function getSearchSheetNames(sheets) {
   const validSheetNames = [];
+  const metadata = await sheets.spreadsheets.get({
+    spreadsheetId: SPREADSHEET_ID,
+    fields: 'sheets.properties(title)'
+  });
+  const sheetNames = (metadata.data.sheets || [])
+    .map((sheet) => sheet.properties.title)
+    .filter((sheetName) => !isProtectedSheetName(sheetName));
 
-  for (const sheetName of SEARCH_SHEET_NAMES) {
+  for (const sheetName of sheetNames) {
     try {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
@@ -90,6 +91,10 @@ export function normalize(text) {
   return String(text || '').trim().toLocaleUpperCase('tr-TR');
 }
 
+export function isProtectedSheetName(sheetName) {
+  return normalize(sheetName).includes('TOPLAM');
+}
+
 export function getPublicError(error) {
   const message = error && error.message ? error.message : 'İşlem sırasında hata oluştu.';
 
@@ -99,6 +104,10 @@ export function getPublicError(error) {
 
   if (message.includes('The caller does not have permission')) {
     return 'Google Sheet erişim izni yok. Sheet dosyasını service account mail adresine paylaşın.';
+  }
+
+  if (message.includes('Requested entity was not found')) {
+    return 'Google Sheet bulunamadı. SPREADSHEET_ID değerini kontrol edin.';
   }
 
   return message;

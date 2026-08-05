@@ -12,9 +12,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const sheetName = String(req.body.sheetName || '').trim();
-    const rowNumber = Number(req.body.rowNumber);
-    const completed = req.body.completed !== false;
+    const sheetName = String(req.body?.sheetName || '').trim();
+    const rowNumber = Number(req.body?.rowNumber);
+    const completed = req.body?.completed !== false;
     const sheets = await getSheetsClient();
     const sheetNames = await getSearchSheetNames(sheets);
 

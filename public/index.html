@@ -13,11 +13,12 @@
           <p class="eyebrow">Servis Sorgu Paneli</p>
           <h1>Form No Bulma</h1>
           <p class="subtitle">Form numarasını yaz, cihaz bilgilerini hızlı ve düzenli şekilde görüntüle.</p>
+          <a class="settings-link" href="/settings">Sayfa Ayarları</a>
         </div>
         <div class="hero-stack" aria-label="Sistem kaynakları">
           <div class="hero-stat">
             <span>Kaynak</span>
-            <strong>4 sayfa</strong>
+            <strong>Sheets</strong>
           </div>
           <div class="hero-stat accent">
             <span>İşlem</span>
@@ -41,32 +42,6 @@
             </button>
           </div>
         </form>
-      </section>
-
-      <section class="settings-panel">
-        <details>
-          <summary>
-            <span>Google Sheets Sayfa Ayarları</span>
-            <small>Sayfa seç, ekle veya sil</small>
-          </summary>
-          <div class="settings-body">
-            <div class="settings-field">
-              <label for="sheetSelect">Sayfa seç</label>
-              <select id="sheetSelect"></select>
-            </div>
-            <form class="settings-field add-sheet-form" id="addSheetForm">
-              <label for="newSheetName">Yeni sayfa adı</label>
-              <div class="settings-row">
-                <input id="newSheetName" autocomplete="off" placeholder="Örn: EYLÜL">
-                <button class="secondary-button" type="submit">Ekle</button>
-              </div>
-            </form>
-            <div class="settings-actions">
-              <button class="secondary-button" type="button" id="refreshSheetsButton">Yenile</button>
-              <button class="danger-button" type="button" id="deleteSheetButton">Seçili Sayfayı Sil</button>
-            </div>
-          </div>
-        </details>
       </section>
 
       <section class="results-section">

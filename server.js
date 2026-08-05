@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import searchHandler from './api/search.js';
 import completeHandler from './api/complete.js';
+import sheetsHandler from './api/sheets.js';
 
 const port = Number(process.env.PORT || 3000);
 const __filename = fileURLToPath(import.meta.url);
@@ -25,6 +26,12 @@ const server = http.createServer(async (req, res) => {
       return completeHandler(req, createJsonResponse(res));
     }
 
+    if (url.pathname === '/api/sheets') {
+      req.query = Object.fromEntries(url.searchParams.entries());
+      req.body = req.method === 'POST' || req.method === 'DELETE' ? await readJsonBody(req) : {};
+      return sheetsHandler(req, createJsonResponse(res));
+    }
+
     return serveStatic(url.pathname, res);
   } catch (error) {
     console.error(error);
@@ -39,6 +46,10 @@ server.listen(port, () => {
 
 function createJsonResponse(res) {
   return {
+    setHeader(name, value) {
+      res.setHeader(name, value);
+      return this;
+    },
     status(code) {
       res.statusCode = code;
       return this;
@@ -73,7 +84,8 @@ function readJsonBody(req) {
 }
 
 function serveStatic(urlPath, res) {
-  const cleanPath = urlPath === '/' ? '/index.html' : urlPath;
+  const routedPath = urlPath === '/settings' ? '/settings.html' : urlPath;
+  const cleanPath = routedPath === '/' ? '/index.html' : routedPath;
   const filePath = path.normalize(path.join(publicDir, cleanPath));
 
   if (!filePath.startsWith(publicDir)) {
