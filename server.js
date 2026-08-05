@@ -1,173 +1,100 @@
 import 'dotenv/config';
-import express from 'express';
-import { google } from 'googleapis';
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import searchHandler from './api/search.js';
+import completeHandler from './api/complete.js';
 
-const app = express();
 const port = Number(process.env.PORT || 3000);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const publicDir = path.join(__dirname, 'public');
 
-const SPREADSHEET_ID = process.env.SPREADSHEET_ID || '';
-const SEARCH_SHEET_NAMES = ['AĞUSTOS', 'Renk Değişenler'];
-
-const COL = {
-  date: 0,
-  formNo: 1,
-  model: 2,
-  imei: 3,
-  color: 4,
-  status: 8,
-  reason: 10,
-  note: 11,
-  technician: 12,
-  tester: 13,
-  completed: 14
-};
-
-app.use(express.json());
-app.use(express.static('public'));
-
-app.get('/api/search', async (req, res) => {
+const server = http.createServer(async (req, res) => {
   try {
-    const formNo = String(req.query.formNo || '').trim();
+    const url = new URL(req.url, `http://${req.headers.host}`);
 
-    if (!formNo) {
-      return res.status(400).json({ error: 'Form no zorunlu.' });
+    if (url.pathname === '/api/search') {
+      req.query = Object.fromEntries(url.searchParams.entries());
+      return searchHandler(req, createJsonResponse(res));
     }
 
-    const sheets = await getSheetsClient();
-    const normalizedFormNo = normalize(formNo);
-    const results = [];
-
-    for (const sheetName of SEARCH_SHEET_NAMES) {
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: quoteSheetName(sheetName) + '!A2:O'
-      });
-
-      const rows = response.data.values || [];
-
-      rows.forEach((row, index) => {
-        const rowFormNo = value(row, COL.formNo);
-
-        if (normalize(rowFormNo) !== normalizedFormNo) {
-          return;
-        }
-
-        results.push({
-          sheetName,
-          rowNumber: index + 2,
-          tarih: value(row, COL.date),
-          formNo: rowFormNo,
-          model: value(row, COL.model),
-          imei: value(row, COL.imei),
-          renk: value(row, COL.color),
-          durum: value(row, COL.status),
-          kaldiSebebi: value(row, COL.reason),
-          not: value(row, COL.note),
-          teknisyen: value(row, COL.technician),
-          kaliteKontrol: value(row, COL.tester),
-          tamamlandi: value(row, COL.completed)
-        });
-      });
+    if (url.pathname === '/api/complete') {
+      req.body = await readJsonBody(req);
+      return completeHandler(req, createJsonResponse(res));
     }
 
-    res.json({ results });
+    return serveStatic(url.pathname, res);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: getPublicError(error) });
+    res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ error: 'İşlem sırasında hata oluştu.' }));
   }
 });
 
-app.post('/api/complete', async (req, res) => {
-  try {
-    const sheetName = String(req.body.sheetName || '').trim();
-    const rowNumber = Number(req.body.rowNumber);
-
-    if (!SEARCH_SHEET_NAMES.includes(sheetName)) {
-      return res.status(400).json({ error: 'Geçersiz sayfa.' });
-    }
-
-    if (!Number.isInteger(rowNumber) || rowNumber < 2) {
-      return res.status(400).json({ error: 'Geçersiz satır.' });
-    }
-
-    const sheets = await getSheetsClient();
-
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
-      range: quoteSheetName(sheetName) + `!O${rowNumber}`,
-      valueInputOption: 'USER_ENTERED',
-      requestBody: {
-        values: [['Tamamlandı']]
-      }
-    });
-
-    res.json({ ok: true, message: `${sheetName} sayfasında O${rowNumber} hücresine Tamamlandı yazıldı.` });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: getPublicError(error) });
-  }
-});
-
-app.get('/health', (req, res) => {
-  res.json({ ok: true });
-});
-
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Form No Sorgu Paneli http://localhost:${port} adresinde çalışıyor.`);
 });
 
-async function getSheetsClient() {
-  if (!SPREADSHEET_ID) {
-    throw new Error('SPREADSHEET_ID eksik.');
-  }
+function createJsonResponse(res) {
+  return {
+    status(code) {
+      res.statusCode = code;
+      return this;
+    },
+    json(payload) {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.end(JSON.stringify(payload));
+    }
+  };
+}
 
-  const credentials = getServiceAccountCredentials();
-  const auth = new google.auth.GoogleAuth({
-    credentials,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets']
+function readJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+    });
+    req.on('end', () => {
+      if (!body) {
+        resolve({});
+        return;
+      }
+
+      try {
+        resolve(JSON.parse(body));
+      } catch (error) {
+        reject(error);
+      }
+    });
+    req.on('error', reject);
   });
-
-  return google.sheets({ version: 'v4', auth });
 }
 
-function getServiceAccountCredentials() {
-  const rawJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+function serveStatic(urlPath, res) {
+  const cleanPath = urlPath === '/' ? '/index.html' : urlPath;
+  const filePath = path.normalize(path.join(publicDir, cleanPath));
 
-  if (!rawJson) {
-    throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON eksik.');
+  if (!filePath.startsWith(publicDir)) {
+    res.writeHead(403);
+    res.end('Forbidden');
+    return;
   }
 
-  const credentials = JSON.parse(rawJson);
-
-  if (credentials.private_key) {
-    credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
+  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+    res.writeHead(404);
+    res.end('Not found');
+    return;
   }
 
-  return credentials;
+  res.writeHead(200, { 'Content-Type': getContentType(filePath) });
+  fs.createReadStream(filePath).pipe(res);
 }
 
-function quoteSheetName(sheetName) {
-  return `'${sheetName.replace(/'/g, "''")}'`;
-}
-
-function value(row, index) {
-  return String(row[index] || '').trim();
-}
-
-function normalize(text) {
-  return String(text || '').trim().toLocaleUpperCase('tr-TR');
-}
-
-function getPublicError(error) {
-  const message = error && error.message ? error.message : 'İşlem sırasında hata oluştu.';
-
-  if (message.includes('Unable to parse range')) {
-    return 'Sayfa adı veya aralık bulunamadı.';
-  }
-
-  if (message.includes('The caller does not have permission')) {
-    return 'Google Sheet erişim izni yok. Sheet dosyasını service account mail adresine paylaşın.';
-  }
-
-  return message;
+function getContentType(filePath) {
+  if (filePath.endsWith('.html')) return 'text/html; charset=utf-8';
+  if (filePath.endsWith('.css')) return 'text/css; charset=utf-8';
+  if (filePath.endsWith('.js')) return 'text/javascript; charset=utf-8';
+  return 'application/octet-stream';
 }
