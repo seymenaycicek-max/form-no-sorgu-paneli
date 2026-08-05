@@ -1,7 +1,7 @@
 import {
-  SEARCH_SHEET_NAMES,
   SPREADSHEET_ID,
   getPublicError,
+  getSearchSheetNames,
   getSheetsClient,
   quoteSheetName
 } from './_sheets.js';
@@ -14,16 +14,16 @@ export default async function handler(req, res) {
   try {
     const sheetName = String(req.body.sheetName || '').trim();
     const rowNumber = Number(req.body.rowNumber);
+    const sheets = await getSheetsClient();
+    const sheetNames = await getSearchSheetNames(sheets);
 
-    if (!SEARCH_SHEET_NAMES.includes(sheetName)) {
+    if (!sheetNames.includes(sheetName)) {
       return res.status(400).json({ error: 'Geçersiz sayfa.' });
     }
 
     if (!Number.isInteger(rowNumber) || rowNumber < 2) {
       return res.status(400).json({ error: 'Geçersiz satır.' });
     }
-
-    const sheets = await getSheetsClient();
 
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,

@@ -1,8 +1,8 @@
 import {
   COL,
-  SEARCH_SHEET_NAMES,
   SPREADSHEET_ID,
   getPublicError,
+  getSearchSheetNames,
   getSheetsClient,
   normalize,
   quoteSheetName,
@@ -22,10 +22,11 @@ export default async function handler(req, res) {
     }
 
     const sheets = await getSheetsClient();
+    const sheetNames = await getSearchSheetNames(sheets);
     const normalizedFormNo = normalize(formNo);
     const results = [];
 
-    for (const sheetName of SEARCH_SHEET_NAMES) {
+    for (const sheetName of sheetNames) {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
         range: quoteSheetName(sheetName) + '!A2:O'
