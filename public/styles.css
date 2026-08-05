@@ -532,46 +532,6 @@ select:focus {
   color: var(--ok-text);
 }
 
-.status-completed {
-  background: var(--completed-bg);
-  color: var(--completed-text);
-}
-
-.complete-check {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  background: #ffffff;
-  color: var(--text);
-  padding: 0 11px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.complete-check.is-done {
-  border-color: rgba(22, 101, 52, 0.25);
-  background: var(--ok-bg);
-  color: var(--ok-text);
-}
-
-.complete-check input {
-  width: 17px;
-  height: 17px;
-  min-height: 0;
-  padding: 0;
-  cursor: pointer;
-  accent-color: var(--primary);
-}
-
-.complete-check input:disabled {
-  cursor: default;
-}
-
 .result-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -699,8 +659,7 @@ select:focus {
     width: 100%;
   }
 
-  .status-pill,
-  .complete-check {
+  .status-pill {
     justify-content: center;
     width: 100%;
   }

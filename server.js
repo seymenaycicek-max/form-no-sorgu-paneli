@@ -4,7 +4,6 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import searchHandler from './api/search.js';
-import completeHandler from './api/complete.js';
 import sheetsHandler from './api/sheets.js';
 
 const port = Number(process.env.PORT || 3000);
@@ -19,11 +18,6 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/search') {
       req.query = Object.fromEntries(url.searchParams.entries());
       return searchHandler(req, createJsonResponse(res));
-    }
-
-    if (url.pathname === '/api/complete') {
-      req.body = await readJsonBody(req);
-      return completeHandler(req, createJsonResponse(res));
     }
 
     if (url.pathname === '/api/sheets') {

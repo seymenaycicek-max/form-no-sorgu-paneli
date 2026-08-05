@@ -84,19 +84,13 @@ function createResultCard(device, index) {
   titleWrap.appendChild(title);
   titleWrap.appendChild(meta);
 
-  const statusText = getDisplayStatus(device);
+  const statusText = device.durum || 'Durum yok';
   const status = document.createElement('span');
   status.className = getStatusClass(statusText);
   status.textContent = statusText;
 
-  const action = createCompleteAction(device, status);
-  const headerRight = document.createElement('div');
-  headerRight.className = 'card-actions';
-  headerRight.appendChild(status);
-  headerRight.appendChild(action);
-
   header.appendChild(titleWrap);
-  header.appendChild(headerRight);
+  header.appendChild(status);
   card.appendChild(header);
 
   const body = document.createElement('div');
@@ -117,65 +111,6 @@ function createResultCard(device, index) {
   return card;
 }
 
-function createCompleteAction(device, statusElement) {
-  const label = document.createElement('label');
-  label.className = 'complete-check';
-
-  const checkbox = document.createElement('input');
-  checkbox.type = 'checkbox';
-  checkbox.checked = isCompleted(device);
-
-  const text = document.createElement('span');
-  text.textContent = 'Tamamlandı';
-
-  checkbox.addEventListener('change', async () => {
-    const nextCompleted = checkbox.checked;
-    checkbox.disabled = true;
-    text.textContent = nextCompleted ? 'Yazılıyor...' : 'Temizleniyor...';
-
-    try {
-      const response = await fetch('/api/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sheetName: device.sheetName,
-          rowNumber: device.rowNumber,
-          completed: nextCompleted
-        })
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Tamamlandı yazılamadı.');
-      }
-
-      device.tamamlandi = nextCompleted ? 'Tamamlandı' : '';
-      text.textContent = 'Tamamlandı';
-      label.classList.toggle('is-done', nextCompleted);
-      const statusText = getDisplayStatus(device);
-      statusElement.textContent = statusText;
-      statusElement.className = getStatusClass(statusText);
-      showToast(data.message || (nextCompleted ? 'Tamamlandı yazıldı.' : 'Tamamlandı temizlendi.'), false);
-    } catch (error) {
-      checkbox.checked = !nextCompleted;
-      checkbox.disabled = false;
-      text.textContent = 'Tamamlandı';
-      showToast(error.message, true);
-      return;
-    }
-
-    checkbox.disabled = false;
-  });
-
-  if (checkbox.checked) {
-    label.classList.add('is-done');
-  }
-
-  label.appendChild(checkbox);
-  label.appendChild(text);
-  return label;
-}
-
 function createField(label, value, variant = '') {
   const item = document.createElement('div');
   item.className = variant ? `result-field ${variant}` : 'result-field';
@@ -194,22 +129,9 @@ function createField(label, value, variant = '') {
 function getStatusClass(status) {
   const normalized = String(status || '').toLocaleLowerCase('tr-TR');
 
-  if (normalized.includes('tamam')) return 'status-pill status-completed';
   if (normalized.includes('kald')) return 'status-pill status-waiting';
   if (normalized.includes('gec') || normalized.includes('geç')) return 'status-pill status-ok';
   return 'status-pill';
-}
-
-function getDisplayStatus(device) {
-  if (isCompleted(device)) {
-    return 'Tamamlandı';
-  }
-
-  return device.durum || 'Durum yok';
-}
-
-function isCompleted(device) {
-  return String(device.tamamlandi || '').toLocaleLowerCase('tr-TR').includes('tamam');
 }
 
 function setLoading(isLoading) {
