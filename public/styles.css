@@ -686,6 +686,200 @@ select:focus {
   background: var(--danger);
 }
 
+.test-shell {
+  width: min(980px, 100%);
+}
+
+.test-hero {
+  align-items: center;
+}
+
+.test-board {
+  border: 2px solid #111827;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.test-top-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.7fr 86px 86px 86px;
+  border-bottom: 2px solid #111827;
+}
+
+.test-top-grid label,
+.test-summary {
+  min-width: 0;
+  border-right: 2px solid #111827;
+  padding: 9px;
+}
+
+.test-top-grid label span,
+.test-summary span,
+.test-note span {
+  display: block;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.test-top-grid input {
+  min-height: 34px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  font-size: 18px;
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.test-summary {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.test-summary:last-child {
+  border-right: 0;
+}
+
+.test-summary strong {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.test-summary.red strong,
+.final-red {
+  color: var(--danger);
+}
+
+.final-ok {
+  color: var(--ok-text);
+}
+
+.test-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 2px solid #111827;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.test-progress div {
+  display: grid;
+  gap: 3px;
+}
+
+.test-progress span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.test-progress strong {
+  color: var(--text);
+  font-size: 18px;
+}
+
+.test-table {
+  display: grid;
+}
+
+.test-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 100px 100px 100px;
+  min-height: 42px;
+  border-bottom: 1px solid #111827;
+  background: #ffffff;
+}
+
+.test-row.active {
+  background: #fff7ed;
+  outline: 3px solid #f97316;
+  outline-offset: -3px;
+}
+
+.test-row:last-child {
+  border-bottom: 2px solid #111827;
+}
+
+.test-name,
+.mark-button,
+.test-result {
+  border: 0;
+  border-right: 1px solid #111827;
+  background: transparent;
+}
+
+.test-name {
+  min-width: 0;
+  padding: 0 10px;
+  color: #111827;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: left;
+}
+
+.mark-button {
+  cursor: pointer;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.mark-button.ok {
+  color: var(--ok-text);
+}
+
+.mark-button.red {
+  color: var(--danger);
+}
+
+.mark-button.selected {
+  background: rgba(15, 118, 110, 0.1);
+}
+
+.mark-button.red.selected {
+  background: rgba(180, 35, 24, 0.1);
+}
+
+.test-result {
+  display: grid;
+  place-items: center;
+  border-right: 0;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.test-result.ok {
+  color: var(--ok-text);
+}
+
+.test-result.red {
+  color: var(--danger);
+}
+
+.test-note {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.test-note textarea {
+  width: 100%;
+  min-height: 92px;
+  border: 1px solid #111827;
+  border-radius: 4px;
+  padding: 10px;
+  font: inherit;
+  resize: vertical;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -774,5 +968,27 @@ select:focus {
   .sheet-right {
     justify-content: space-between;
     width: 100%;
+  }
+
+  .test-top-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .test-top-grid label,
+  .test-summary {
+    border-bottom: 1px solid #111827;
+  }
+
+  .test-row {
+    grid-template-columns: minmax(130px, 1fr) 64px 64px 64px;
+  }
+
+  .test-name {
+    font-size: 13px;
+  }
+
+  .test-progress {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

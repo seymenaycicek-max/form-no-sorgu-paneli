@@ -78,7 +78,11 @@ function readJsonBody(req) {
 }
 
 function serveStatic(urlPath, res) {
-  const routedPath = urlPath === '/settings' ? '/settings.html' : urlPath;
+  const routeMap = {
+    '/settings': '/settings.html',
+    '/test': '/test.html'
+  };
+  const routedPath = routeMap[urlPath] || urlPath;
   const cleanPath = routedPath === '/' ? '/index.html' : routedPath;
   const filePath = path.normalize(path.join(publicDir, cleanPath));
 

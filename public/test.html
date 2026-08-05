@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Kağıdı</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app-shell test-shell">
+      <header class="hero test-hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Dijital Test Kağıdı</p>
+          <h1>Test Kontrol</h1>
+          <p class="subtitle">1 tik koyar, 2 çarpı koyar. Tüm satırlar dolunca Space kağıdı temizler.</p>
+        </div>
+        <div class="hero-stack" aria-label="Klavye kısayolları">
+          <div class="hero-stat">
+            <span>Tik</span>
+            <strong>1</strong>
+          </div>
+          <div class="hero-stat accent">
+            <span>Çarpı</span>
+            <strong>2</strong>
+          </div>
+          <div class="hero-stat">
+            <span>Temizle</span>
+            <strong>Space</strong>
+          </div>
+        </div>
+      </header>
+
+      <section class="test-board" aria-label="Test kağıdı">
+        <div class="test-top-grid">
+          <label>
+            <span>Tarih</span>
+            <input id="testDate" autocomplete="off">
+          </label>
+          <label>
+            <span>Model</span>
+            <input id="testModel" autocomplete="off">
+          </label>
+          <label>
+            <span>GB</span>
+            <input id="testGb" autocomplete="off">
+          </label>
+          <div class="test-summary">
+            <span>OK</span>
+            <strong id="okCount">0</strong>
+          </div>
+          <div class="test-summary red">
+            <span>RED</span>
+            <strong id="redCount">0</strong>
+          </div>
+          <div class="test-summary">
+            <span>SON</span>
+            <strong id="finalStatus">-</strong>
+          </div>
+        </div>
+
+        <div class="test-progress">
+          <div>
+            <span id="progressText">0 / 26 tamamlandı</span>
+            <strong id="activeText">İlk test: Şarj</strong>
+          </div>
+          <button class="secondary-button" type="button" id="clearButton">Temizle</button>
+        </div>
+
+        <div class="test-table" id="testTable"></div>
+
+        <label class="test-note">
+          <span>Not</span>
+          <textarea id="testNote" rows="4" placeholder="Gerekirse not yazın"></textarea>
+        </label>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" hidden></div>
+    <script src="/test.js"></script>
+  </body>
+</html>
