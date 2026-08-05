@@ -12,16 +12,23 @@
         <div class="hero-copy">
           <p class="eyebrow">Servis Sorgu Paneli</p>
           <h1>Form No Bulma</h1>
-          <p class="subtitle">Form numarasını yaz, cihaz detaylarını seçili servis sayfalarından hızlıca getir.</p>
+          <p class="subtitle">Form numarasını yaz, cihaz bilgilerini hızlı ve düzenli şekilde görüntüle.</p>
         </div>
-        <div class="hero-stat">
-          <span>Kaynak</span>
-          <strong>4 sayfa</strong>
+        <div class="hero-stack" aria-label="Sistem kaynakları">
+          <div class="hero-stat">
+            <span>Kaynak</span>
+            <strong>4 sayfa</strong>
+          </div>
+          <div class="hero-stat accent">
+            <span>İşlem</span>
+            <strong>O sütunu</strong>
+          </div>
         </div>
       </header>
 
       <section class="search-panel">
-        <div>
+        <div class="search-copy">
+          <p class="eyebrow">Hızlı Arama</p>
           <h2>Cihaz Ara</h2>
           <p class="panel-note">Ağustos, Temmuz ve renk değişenler kayıtlarında form no eşleşmesi aranır.</p>
         </div>
@@ -29,7 +36,9 @@
           <label for="formNoInput">Form No</label>
           <div class="search-row">
             <input id="formNoInput" autocomplete="off" inputmode="text" placeholder="Örn: 12345" required>
-            <button class="primary-button" type="submit" id="searchButton">Ara</button>
+            <button class="primary-button" type="submit" id="searchButton">
+              <span class="button-text">Ara</span>
+            </button>
           </div>
         </form>
       </section>
@@ -43,7 +52,10 @@
           <span class="result-count" id="resultCount">0 kayıt</span>
         </div>
         <div class="result-list" id="resultList"></div>
-        <p class="empty-state" id="emptyState">Form no yazıp Ara butonuna basın.</p>
+        <div class="empty-state" id="emptyState">
+          <strong>Henüz arama yapılmadı.</strong>
+          <span>Form no yazıp Ara butonuna basın.</span>
+        </div>
       </section>
     </main>
 

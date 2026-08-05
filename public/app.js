@@ -24,8 +24,7 @@ async function handleSearch(event) {
   setLoading(true);
   elements.resultCount.textContent = 'Aranıyor';
   elements.resultList.innerHTML = '';
-  elements.emptyState.textContent = 'Kayıtlar getiriliyor...';
-  elements.emptyState.hidden = false;
+  setEmptyState('Kayıtlar getiriliyor...', 'Lütfen birkaç saniye bekleyin.');
 
   try {
     const response = await fetch(`/api/search?formNo=${encodeURIComponent(formNo)}`);
@@ -38,8 +37,7 @@ async function handleSearch(event) {
     renderResults(data.results || []);
   } catch (error) {
     elements.resultCount.textContent = '0 kayıt';
-    elements.emptyState.textContent = 'Sonuç getirilemedi.';
-    elements.emptyState.hidden = false;
+    setEmptyState('Sonuç getirilemedi.', 'Bağlantıyı veya sistem ayarlarını kontrol edin.');
     showToast(error.message, true);
   } finally {
     setLoading(false);
@@ -51,8 +49,7 @@ function renderResults(results) {
   elements.resultCount.textContent = `${results.length} kayıt`;
 
   if (!results.length) {
-    elements.emptyState.textContent = 'Bu form no için kayıt bulunamadı.';
-    elements.emptyState.hidden = false;
+    setEmptyState('Kayıt bulunamadı.', 'Bu form no için seçili sayfalarda eşleşme yok.');
     return;
   }
 
@@ -70,6 +67,8 @@ function createResultCard(device, index) {
   header.className = 'result-card-header';
 
   const titleWrap = document.createElement('div');
+  titleWrap.className = 'card-title';
+
   const small = document.createElement('span');
   small.className = 'card-index';
   small.textContent = `${device.sheetName || 'Sayfa'} / Kayıt ${index}`;
@@ -79,7 +78,7 @@ function createResultCard(device, index) {
 
   const meta = document.createElement('p');
   meta.className = 'card-meta';
-  meta.textContent = `Teknisyen: ${device.teknisyen || '-'} | Kalite Kontrol: ${device.kaliteKontrol || '-'}`;
+  meta.textContent = `Teknisyen: ${device.teknisyen || '-'} • Kalite Kontrol: ${device.kaliteKontrol || '-'}`;
 
   titleWrap.appendChild(small);
   titleWrap.appendChild(title);
@@ -103,15 +102,15 @@ function createResultCard(device, index) {
   body.className = 'result-grid';
 
   [
-    ['Tarih', device.tarih],
-    ['Model', device.model],
-    ['IMEI', device.imei],
-    ['Renk', device.renk],
-    ['Kaldı Sebebi', device.kaldiSebebi],
-    ['Not', device.not],
-    ['Teknisyen', device.teknisyen],
-    ['Kalite Kontrol', device.kaliteKontrol]
-  ].forEach(([label, value]) => body.appendChild(createField(label, value)));
+    ['Tarih', device.tarih, 'compact'],
+    ['Model', device.model, 'strong'],
+    ['IMEI', device.imei, 'mono'],
+    ['Renk', device.renk, 'compact'],
+    ['Kaldı Sebebi', device.kaldiSebebi, 'wide'],
+    ['Not', device.not, 'wide'],
+    ['Teknisyen', device.teknisyen, 'compact'],
+    ['Kalite Kontrol', device.kaliteKontrol, 'compact']
+  ].forEach(([label, value, variant]) => body.appendChild(createField(label, value, variant)));
 
   card.appendChild(body);
   return card;
@@ -127,7 +126,7 @@ function createCompleteAction(device) {
   checkbox.disabled = checkbox.checked;
 
   const text = document.createElement('span');
-  text.textContent = 'Tamamlandı';
+  text.textContent = checkbox.checked ? 'Tamamlandı' : 'Tamamlandı';
 
   checkbox.addEventListener('change', async () => {
     if (!checkbox.checked) return;
@@ -151,6 +150,7 @@ function createCompleteAction(device) {
       }
 
       text.textContent = 'Tamamlandı';
+      label.classList.add('is-done');
       showToast(data.message || 'Tamamlandı yazıldı.', false);
     } catch (error) {
       checkbox.checked = false;
@@ -160,14 +160,18 @@ function createCompleteAction(device) {
     }
   });
 
+  if (checkbox.checked) {
+    label.classList.add('is-done');
+  }
+
   label.appendChild(checkbox);
   label.appendChild(text);
   return label;
 }
 
-function createField(label, value) {
+function createField(label, value, variant = '') {
   const item = document.createElement('div');
-  item.className = 'result-field';
+  item.className = variant ? `result-field ${variant}` : 'result-field';
 
   const fieldLabel = document.createElement('span');
   fieldLabel.textContent = label;
@@ -190,7 +194,19 @@ function getStatusClass(status) {
 
 function setLoading(isLoading) {
   elements.searchButton.disabled = isLoading;
-  elements.searchButton.textContent = isLoading ? 'Aranıyor' : 'Ara';
+  elements.searchButton.classList.toggle('is-loading', isLoading);
+  elements.searchButton.querySelector('.button-text').textContent = isLoading ? 'Aranıyor' : 'Ara';
+}
+
+function setEmptyState(title, detail) {
+  elements.emptyState.innerHTML = '';
+  const titleNode = document.createElement('strong');
+  titleNode.textContent = title;
+  const detailNode = document.createElement('span');
+  detailNode.textContent = detail;
+  elements.emptyState.appendChild(titleNode);
+  elements.emptyState.appendChild(detailNode);
+  elements.emptyState.hidden = false;
 }
 
 function showToast(message, isError) {
