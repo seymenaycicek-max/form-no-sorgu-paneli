@@ -1,7 +1,12 @@
 import { google } from 'googleapis';
 
 export const SPREADSHEET_ID = process.env.SPREADSHEET_ID || '';
-export const EXCLUDED_SHEET_NAMES = ['TOPLAM'];
+export const SEARCH_SHEET_NAMES = [
+  'AĞUSTOS',
+  'Renk Değişenler',
+  'TEMMUZ',
+  'Renk Değişenler TEMMUZ'
+];
 
 export const COL = {
   date: 0,
@@ -32,28 +37,24 @@ export async function getSheetsClient() {
 }
 
 export async function getSearchSheetNames(sheets) {
-  const metadata = await sheets.spreadsheets.get({
-    spreadsheetId: SPREADSHEET_ID,
-    fields: 'sheets.properties.title'
-  });
-
-  const sheetNames = (metadata.data.sheets || [])
-    .map((sheet) => sheet.properties && sheet.properties.title)
-    .filter(Boolean)
-    .filter((name) => !EXCLUDED_SHEET_NAMES.includes(name));
-
   const validSheetNames = [];
 
-  for (const sheetName of sheetNames) {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: quoteSheetName(sheetName) + '!A1:N1'
-    });
+  for (const sheetName of SEARCH_SHEET_NAMES) {
+    try {
+      const response = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: quoteSheetName(sheetName) + '!A1:N1'
+      });
 
-    const header = response.data.values && response.data.values[0] ? response.data.values[0] : [];
+      const header = response.data.values && response.data.values[0] ? response.data.values[0] : [];
 
-    if (normalize(header[COL.formNo]) === 'FORM NO') {
-      validSheetNames.push(sheetName);
+      if (normalize(header[COL.formNo]) === 'FORM NO') {
+        validSheetNames.push(sheetName);
+      }
+    } catch (error) {
+      if (!String(error.message || '').includes('Unable to parse range')) {
+        throw error;
+      }
     }
   }
 
