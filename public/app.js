@@ -124,16 +124,14 @@ function createCompleteAction(device, statusElement) {
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
   checkbox.checked = isCompleted(device);
-  checkbox.disabled = checkbox.checked;
 
   const text = document.createElement('span');
   text.textContent = checkbox.checked ? 'Tamamlandı' : 'Tamamlandı';
 
   checkbox.addEventListener('change', async () => {
-    if (!checkbox.checked) return;
-
+    const nextCompleted = checkbox.checked;
     checkbox.disabled = true;
-    text.textContent = 'Yazılıyor...';
+    text.textContent = nextCompleted ? 'Yazılıyor...' : 'Temizleniyor...';
 
     try {
       const response = await fetch('/api/complete', {
@@ -141,7 +139,8 @@ function createCompleteAction(device, statusElement) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sheetName: device.sheetName,
-          rowNumber: device.rowNumber
+          rowNumber: device.rowNumber,
+          completed: nextCompleted
         })
       });
       const data = await response.json();
@@ -150,17 +149,22 @@ function createCompleteAction(device, statusElement) {
         throw new Error(data.error || 'Tamamlandı yazılamadı.');
       }
 
+      device.tamamlandi = nextCompleted ? 'Tamamlandı' : '';
       text.textContent = 'Tamamlandı';
-      label.classList.add('is-done');
-      statusElement.textContent = 'Tamamlandı';
-      statusElement.className = getStatusClass('Tamamlandı');
-      showToast(data.message || 'Tamamlandı yazıldı.', false);
+      label.classList.toggle('is-done', nextCompleted);
+      const statusText = getDisplayStatus(device);
+      statusElement.textContent = statusText;
+      statusElement.className = getStatusClass(statusText);
+      showToast(data.message || (nextCompleted ? 'Tamamlandı yazıldı.' : 'Tamamlandı temizlendi.'), false);
     } catch (error) {
-      checkbox.checked = false;
+      checkbox.checked = !nextCompleted;
       checkbox.disabled = false;
       text.textContent = 'Tamamlandı';
       showToast(error.message, true);
+      return;
     }
+
+    checkbox.disabled = false;
   });
 
   if (checkbox.checked) {

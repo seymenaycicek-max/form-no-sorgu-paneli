@@ -14,6 +14,7 @@ export default async function handler(req, res) {
   try {
     const sheetName = String(req.body.sheetName || '').trim();
     const rowNumber = Number(req.body.rowNumber);
+    const completed = req.body.completed !== false;
     const sheets = await getSheetsClient();
     const sheetNames = await getSearchSheetNames(sheets);
 
@@ -30,13 +31,16 @@ export default async function handler(req, res) {
       range: quoteSheetName(sheetName) + `!O${rowNumber}`,
       valueInputOption: 'USER_ENTERED',
       requestBody: {
-        values: [['Tamamlandı']]
+        values: [[completed ? 'Tamamlandı' : '']]
       }
     });
 
     return res.status(200).json({
       ok: true,
-      message: `${sheetName} sayfasında O${rowNumber} hücresine Tamamlandı yazıldı.`
+      completed,
+      message: completed
+        ? `${sheetName} sayfasında O${rowNumber} hücresine Tamamlandı yazıldı.`
+        : `${sheetName} sayfasında O${rowNumber} hücresi temizlendi.`
     });
   } catch (error) {
     console.error(error);
