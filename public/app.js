@@ -84,11 +84,12 @@ function createResultCard(device, index) {
   titleWrap.appendChild(title);
   titleWrap.appendChild(meta);
 
+  const statusText = getDisplayStatus(device);
   const status = document.createElement('span');
-  status.className = getStatusClass(device.durum);
-  status.textContent = device.durum || 'Durum yok';
+  status.className = getStatusClass(statusText);
+  status.textContent = statusText;
 
-  const action = createCompleteAction(device);
+  const action = createCompleteAction(device, status);
   const headerRight = document.createElement('div');
   headerRight.className = 'card-actions';
   headerRight.appendChild(status);
@@ -116,13 +117,13 @@ function createResultCard(device, index) {
   return card;
 }
 
-function createCompleteAction(device) {
+function createCompleteAction(device, statusElement) {
   const label = document.createElement('label');
   label.className = 'complete-check';
 
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
-  checkbox.checked = String(device.tamamlandi || '').toLocaleLowerCase('tr-TR').includes('tamam');
+  checkbox.checked = isCompleted(device);
   checkbox.disabled = checkbox.checked;
 
   const text = document.createElement('span');
@@ -151,6 +152,8 @@ function createCompleteAction(device) {
 
       text.textContent = 'Tamamlandı';
       label.classList.add('is-done');
+      statusElement.textContent = 'Tamamlandı';
+      statusElement.className = getStatusClass('Tamamlandı');
       showToast(data.message || 'Tamamlandı yazıldı.', false);
     } catch (error) {
       checkbox.checked = false;
@@ -187,9 +190,22 @@ function createField(label, value, variant = '') {
 function getStatusClass(status) {
   const normalized = String(status || '').toLocaleLowerCase('tr-TR');
 
+  if (normalized.includes('tamam')) return 'status-pill status-completed';
   if (normalized.includes('kald')) return 'status-pill status-waiting';
   if (normalized.includes('gec') || normalized.includes('geç')) return 'status-pill status-ok';
   return 'status-pill';
+}
+
+function getDisplayStatus(device) {
+  if (isCompleted(device)) {
+    return 'Tamamlandı';
+  }
+
+  return device.durum || 'Durum yok';
+}
+
+function isCompleted(device) {
+  return String(device.tamamlandi || '').toLocaleLowerCase('tr-TR').includes('tamam');
 }
 
 function setLoading(isLoading) {

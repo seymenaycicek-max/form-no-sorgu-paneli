@@ -14,6 +14,8 @@
   --warning-text: #9a3412;
   --ok-bg: #e8f8ef;
   --ok-text: #166534;
+  --completed-bg: #eef4ff;
+  --completed-text: #1d4ed8;
   --danger: #b42318;
   --shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
   --shadow-soft: 0 10px 22px rgba(15, 23, 42, 0.08);
@@ -310,13 +312,18 @@ input:focus {
 }
 
 .status-waiting {
-  background: var(--warning-bg);
-  color: var(--warning-text);
+  background: #fef2f2;
+  color: #b42318;
 }
 
 .status-ok {
   background: var(--ok-bg);
   color: var(--ok-text);
+}
+
+.status-completed {
+  background: var(--completed-bg);
+  color: var(--completed-text);
 }
 
 .complete-check {
