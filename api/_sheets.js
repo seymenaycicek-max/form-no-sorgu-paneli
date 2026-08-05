@@ -7,6 +7,7 @@ export const SEARCH_SHEET_NAMES = [
   'TEMMUZ',
   'Renk Değişenler TEMMUZ'
 ];
+export const PROTECTED_SHEET_NAMES = ['TOPLAM'];
 
 export const COL = {
   date: 0,

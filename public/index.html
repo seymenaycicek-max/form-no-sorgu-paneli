@@ -43,6 +43,32 @@
         </form>
       </section>
 
+      <section class="settings-panel">
+        <details>
+          <summary>
+            <span>Google Sheets Sayfa Ayarları</span>
+            <small>Sayfa seç, ekle veya sil</small>
+          </summary>
+          <div class="settings-body">
+            <div class="settings-field">
+              <label for="sheetSelect">Sayfa seç</label>
+              <select id="sheetSelect"></select>
+            </div>
+            <form class="settings-field add-sheet-form" id="addSheetForm">
+              <label for="newSheetName">Yeni sayfa adı</label>
+              <div class="settings-row">
+                <input id="newSheetName" autocomplete="off" placeholder="Örn: EYLÜL">
+                <button class="secondary-button" type="submit">Ekle</button>
+              </div>
+            </form>
+            <div class="settings-actions">
+              <button class="secondary-button" type="button" id="refreshSheetsButton">Yenile</button>
+              <button class="danger-button" type="button" id="deleteSheetButton">Seçili Sayfayı Sil</button>
+            </div>
+          </div>
+        </details>
+      </section>
+
       <section class="results-section">
         <div class="results-heading">
           <div>

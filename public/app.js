@@ -5,11 +5,20 @@ const elements = {
   resultCount: document.getElementById('resultCount'),
   resultList: document.getElementById('resultList'),
   emptyState: document.getElementById('emptyState'),
-  toast: document.getElementById('toast')
+  toast: document.getElementById('toast'),
+  sheetSelect: document.getElementById('sheetSelect'),
+  addSheetForm: document.getElementById('addSheetForm'),
+  newSheetName: document.getElementById('newSheetName'),
+  refreshSheetsButton: document.getElementById('refreshSheetsButton'),
+  deleteSheetButton: document.getElementById('deleteSheetButton')
 };
 
 elements.searchForm.addEventListener('submit', handleSearch);
+elements.addSheetForm.addEventListener('submit', handleAddSheet);
+elements.refreshSheetsButton.addEventListener('click', loadSheets);
+elements.deleteSheetButton.addEventListener('click', handleDeleteSheet);
 elements.formNoInput.focus();
+loadSheets();
 
 async function handleSearch(event) {
   event.preventDefault();
@@ -41,6 +50,105 @@ async function handleSearch(event) {
     showToast(error.message, true);
   } finally {
     setLoading(false);
+  }
+}
+
+async function loadSheets() {
+  elements.refreshSheetsButton.disabled = true;
+
+  try {
+    const response = await fetch('/api/sheets');
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Sayfalar getirilemedi.');
+    }
+
+    renderSheetOptions(data.sheets || []);
+  } catch (error) {
+    showToast(error.message, true);
+  } finally {
+    elements.refreshSheetsButton.disabled = false;
+  }
+}
+
+function renderSheetOptions(sheets) {
+  elements.sheetSelect.innerHTML = '';
+
+  sheets.forEach((sheet) => {
+    const option = document.createElement('option');
+    option.value = sheet.name;
+    option.textContent = sheet.protected ? `${sheet.name} (korumalı)` : sheet.name;
+    option.dataset.protected = sheet.protected ? 'true' : 'false';
+    elements.sheetSelect.appendChild(option);
+  });
+}
+
+async function handleAddSheet(event) {
+  event.preventDefault();
+
+  const name = elements.newSheetName.value.trim();
+
+  if (!name) {
+    showToast('Yeni sayfa adı yazın.', true);
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/sheets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Sayfa eklenemedi.');
+    }
+
+    elements.newSheetName.value = '';
+    renderSheetOptions(data.sheets || []);
+    elements.sheetSelect.value = name;
+    showToast(data.message || 'Sayfa eklendi.', false);
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
+async function handleDeleteSheet() {
+  const name = elements.sheetSelect.value;
+  const selectedOption = elements.sheetSelect.selectedOptions[0];
+
+  if (!name) {
+    showToast('Silinecek sayfa seçin.', true);
+    return;
+  }
+
+  if (selectedOption && selectedOption.dataset.protected === 'true') {
+    showToast('Bu sayfa korumalı, silinemez.', true);
+    return;
+  }
+
+  const confirmed = window.confirm(`${name} sayfası silinsin mi? Bu işlem geri alınamaz.`);
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/sheets?name=${encodeURIComponent(name)}`, {
+      method: 'DELETE'
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Sayfa silinemedi.');
+    }
+
+    renderSheetOptions(data.sheets || []);
+    showToast(data.message || 'Sayfa silindi.', false);
+  } catch (error) {
+    showToast(error.message, true);
   }
 }
 
