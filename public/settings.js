@@ -1,19 +1,14 @@
 const elements = {
-  sheetSelect: document.getElementById('sheetSelect'),
   sheetList: document.getElementById('sheetList'),
   sheetTotal: document.getElementById('sheetTotal'),
+  visibleTotal: document.getElementById('visibleTotal'),
   settingsStatus: document.getElementById('settingsStatus'),
   emptyState: document.getElementById('emptyState'),
-  addSheetForm: document.getElementById('addSheetForm'),
-  newSheetName: document.getElementById('newSheetName'),
   refreshSheetsButton: document.getElementById('refreshSheetsButton'),
-  deleteSheetButton: document.getElementById('deleteSheetButton'),
   toast: document.getElementById('toast')
 };
 
-elements.addSheetForm.addEventListener('submit', handleAddSheet);
 elements.refreshSheetsButton.addEventListener('click', loadSheets);
-elements.deleteSheetButton.addEventListener('click', handleDeleteSheet);
 
 loadSheets();
 
@@ -32,9 +27,9 @@ async function loadSheets() {
 
     renderSheets(data.sheets || []);
   } catch (error) {
-    elements.sheetSelect.innerHTML = '';
     elements.sheetList.innerHTML = '';
     elements.sheetTotal.textContent = '0';
+    elements.visibleTotal.textContent = '0';
     elements.settingsStatus.textContent = 'Hata';
     setEmptyState('Sayfalar gösterilemedi.', error.message);
     showToast(error.message, true);
@@ -44,121 +39,124 @@ async function loadSheets() {
 }
 
 function renderSheets(sheets) {
-  elements.sheetSelect.innerHTML = '';
+  const visibleCount = sheets.filter((sheet) => sheet.visible && sheet.eligible && !sheet.protected).length;
+
   elements.sheetList.innerHTML = '';
   elements.sheetTotal.textContent = String(sheets.length);
-  elements.settingsStatus.textContent = `${sheets.length} sayfa`;
+  elements.visibleTotal.textContent = String(visibleCount);
+  elements.settingsStatus.textContent = `${visibleCount} açık`;
 
   if (!sheets.length) {
-    setEmptyState('Sayfa bulunamadı.', 'Google Sheets dosyasında görünür sayfa yok.');
+    setEmptyState('Sayfa bulunamadı.', 'Google Sheets dosyasında sayfa yok.');
     return;
   }
 
   elements.emptyState.hidden = true;
 
   sheets.forEach((sheet) => {
-    const option = document.createElement('option');
-    option.value = sheet.name;
-    option.textContent = sheet.protected ? `${sheet.name} (korumalı)` : sheet.name;
-    option.dataset.protected = sheet.protected ? 'true' : 'false';
-    elements.sheetSelect.appendChild(option);
-
-    const item = document.createElement('article');
-    item.className = 'sheet-item';
-
-    const name = document.createElement('strong');
-    name.textContent = sheet.name;
-
-    const badge = document.createElement('span');
-    badge.className = sheet.protected ? 'sheet-badge protected' : 'sheet-badge';
-    badge.textContent = sheet.protected ? 'Korumalı' : 'Silinebilir';
-
-    item.appendChild(name);
-    item.appendChild(badge);
-    elements.sheetList.appendChild(item);
+    elements.sheetList.appendChild(createSheetItem(sheet));
   });
 }
 
-async function handleAddSheet(event) {
-  event.preventDefault();
+function createSheetItem(sheet) {
+  const item = document.createElement('article');
+  item.className = 'sheet-item';
 
-  const name = elements.newSheetName.value.trim();
+  const textWrap = document.createElement('div');
+  textWrap.className = 'sheet-info';
 
-  if (!name) {
-    showToast('Yeni sayfa adı yazın.', true);
-    return;
-  }
+  const name = document.createElement('strong');
+  name.textContent = sheet.name;
 
-  setBusy(true);
+  const detail = document.createElement('span');
+  detail.textContent = getSheetDetail(sheet);
+
+  textWrap.appendChild(name);
+  textWrap.appendChild(detail);
+
+  const right = document.createElement('div');
+  right.className = 'sheet-right';
+
+  const badge = document.createElement('span');
+  badge.className = getBadgeClass(sheet);
+  badge.textContent = getBadgeText(sheet);
+
+  const toggle = document.createElement('label');
+  toggle.className = 'switch';
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = Boolean(sheet.visible);
+  checkbox.disabled = sheet.protected || !sheet.eligible;
+
+  const slider = document.createElement('span');
+  slider.className = 'switch-slider';
+
+  checkbox.addEventListener('change', () => updateVisibility(sheet.name, checkbox));
+
+  toggle.appendChild(checkbox);
+  toggle.appendChild(slider);
+
+  right.appendChild(badge);
+  right.appendChild(toggle);
+
+  item.appendChild(textWrap);
+  item.appendChild(right);
+
+  return item;
+}
+
+async function updateVisibility(name, checkbox) {
+  const visible = checkbox.checked;
+  checkbox.disabled = true;
 
   try {
     const response = await fetch('/api/sheets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name })
+      body: JSON.stringify({ name, visible })
     });
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Sayfa eklenemedi.');
+      throw new Error(data.error || 'Ayar kaydedilemedi.');
     }
 
-    elements.newSheetName.value = '';
     renderSheets(data.sheets || []);
-    elements.sheetSelect.value = name;
-    showToast(data.message || 'Sayfa eklendi.', false);
+    showToast(data.message || 'Ayar kaydedildi.', false);
   } catch (error) {
+    checkbox.checked = !visible;
+    checkbox.disabled = false;
     showToast(error.message, true);
-  } finally {
-    setBusy(false);
   }
 }
 
-async function handleDeleteSheet() {
-  const name = elements.sheetSelect.value;
-  const selectedOption = elements.sheetSelect.selectedOptions[0];
-
-  if (!name) {
-    showToast('Silinecek sayfa seçin.', true);
-    return;
+function getSheetDetail(sheet) {
+  if (sheet.protected) {
+    return 'Toplam sayfası sorguya dahil edilmez.';
   }
 
-  if (selectedOption && selectedOption.dataset.protected === 'true') {
-    showToast('Bu sayfa korumalı, silinemez.', true);
-    return;
+  if (!sheet.eligible) {
+    return 'Başlık satırında FORM NO olmadığı için sorguya dahil edilemez.';
   }
 
-  const confirmed = window.confirm(`${name} sayfası silinsin mi? Bu işlem geri alınamaz.`);
+  return sheet.visible ? 'Form no sorgusunda aranıyor.' : 'Form no sorgusunda gizli.';
+}
 
-  if (!confirmed) {
-    return;
-  }
+function getBadgeClass(sheet) {
+  if (sheet.protected || !sheet.eligible) return 'sheet-badge protected';
+  if (sheet.visible) return 'sheet-badge';
+  return 'sheet-badge hidden';
+}
 
-  setBusy(true);
-
-  try {
-    const response = await fetch(`/api/sheets?name=${encodeURIComponent(name)}`, {
-      method: 'DELETE'
-    });
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Sayfa silinemedi.');
-    }
-
-    renderSheets(data.sheets || []);
-    showToast(data.message || 'Sayfa silindi.', false);
-  } catch (error) {
-    showToast(error.message, true);
-  } finally {
-    setBusy(false);
-  }
+function getBadgeText(sheet) {
+  if (sheet.protected) return 'Kilitli';
+  if (!sheet.eligible) return 'Uygun Değil';
+  return sheet.visible ? 'Gösteriliyor' : 'Gizli';
 }
 
 function setBusy(isBusy) {
   elements.refreshSheetsButton.disabled = isBusy;
-  elements.deleteSheetButton.disabled = isBusy;
-  elements.addSheetForm.querySelector('button').disabled = isBusy;
 }
 
 function setEmptyState(title, detail) {

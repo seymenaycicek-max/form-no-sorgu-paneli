@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sayfa Ayarları</title>
+    <title>Gösterilecek Sayfalar</title>
     <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
@@ -11,45 +11,32 @@
       <header class="hero">
         <div class="hero-copy">
           <p class="eyebrow">Google Sheets</p>
-          <h1>Sayfa Ayarları</h1>
-          <p class="subtitle">Sorgu panelinde kullanılan çalışma kitabındaki sayfaları buradan yönet.</p>
+          <h1>Gösterilecek Sayfalar</h1>
+          <p class="subtitle">Form no sorgusunda hangi Google Sheets sayfalarının aranacağını buradan seç.</p>
           <a class="settings-link" href="/">Sorgu Paneline Dön</a>
         </div>
         <div class="hero-stack" aria-label="Ayar özeti">
           <div class="hero-stat">
-            <span>Liste</span>
+            <span>Toplam</span>
             <strong id="sheetTotal">0</strong>
           </div>
           <div class="hero-stat accent">
-            <span>İşlem</span>
-            <strong>Ekle / Sil</strong>
+            <span>Gösterilen</span>
+            <strong id="visibleTotal">0</strong>
           </div>
         </div>
       </header>
 
       <section class="settings-page-panel">
         <div class="settings-copy">
-          <p class="eyebrow">Sayfa Seç</p>
-          <h2>Mevcut Sayfalar</h2>
-          <p class="panel-note">Aşağıdaki liste doğrudan Google Sheets dosyasından okunur.</p>
+          <p class="eyebrow">Sayfa Yönetimi</p>
+          <h2>Göster / Gizle</h2>
+          <p class="panel-note">Buradaki işlem Google Sheets sekmelerini silmez veya oluşturmaz. Sadece sorgu panelinde aranacak sayfayı açıp kapatır.</p>
         </div>
 
         <div class="settings-controls">
-          <label for="sheetSelect">Sayfa</label>
-          <select id="sheetSelect"></select>
-          <div class="settings-actions left">
-            <button class="secondary-button" type="button" id="refreshSheetsButton">Yenile</button>
-            <button class="danger-button" type="button" id="deleteSheetButton">Seçili Sayfayı Sil</button>
-          </div>
+          <button class="secondary-button" type="button" id="refreshSheetsButton">Yenile</button>
         </div>
-
-        <form class="settings-add-card" id="addSheetForm">
-          <label for="newSheetName">Yeni sayfa adı</label>
-          <div class="settings-row">
-            <input id="newSheetName" autocomplete="off" placeholder="Örn: EYLÜL">
-            <button class="primary-button" type="submit">Ekle</button>
-          </div>
-        </form>
       </section>
 
       <section class="results-section">

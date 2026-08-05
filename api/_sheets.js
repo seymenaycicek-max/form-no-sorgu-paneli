@@ -1,7 +1,7 @@
 import { google } from 'googleapis';
 
 export const SPREADSHEET_ID = process.env.SPREADSHEET_ID || '';
-export const PROTECTED_SHEET_NAMES = ['TOPLAM'];
+export const SETTINGS_SHEET_NAME = '_PANEL_AYARLAR';
 
 export const COL = {
   date: 0,
@@ -32,35 +32,110 @@ export async function getSheetsClient() {
 }
 
 export async function getSearchSheetNames(sheets) {
+  const sheetList = await getBusinessSheetList(sheets);
+  const settings = await getVisibilitySettings(sheets);
   const validSheetNames = [];
-  const metadata = await sheets.spreadsheets.get({
-    spreadsheetId: SPREADSHEET_ID,
-    fields: 'sheets.properties(title)'
-  });
-  const sheetNames = (metadata.data.sheets || [])
-    .map((sheet) => sheet.properties.title)
-    .filter((sheetName) => !isProtectedSheetName(sheetName));
 
-  for (const sheetName of sheetNames) {
-    try {
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: quoteSheetName(sheetName) + '!A1:N1'
-      });
+  for (const sheet of sheetList) {
+    if (sheet.protected) {
+      continue;
+    }
 
-      const header = response.data.values && response.data.values[0] ? response.data.values[0] : [];
+    if (settings.get(sheet.name) === false) {
+      continue;
+    }
 
-      if (normalize(header[COL.formNo]) === 'FORM NO') {
-        validSheetNames.push(sheetName);
-      }
-    } catch (error) {
-      if (!String(error.message || '').includes('Unable to parse range')) {
-        throw error;
-      }
+    if (await hasFormNoHeader(sheets, sheet.name)) {
+      validSheetNames.push(sheet.name);
     }
   }
 
   return validSheetNames;
+}
+
+export async function getBusinessSheetList(sheets) {
+  const metadata = await sheets.spreadsheets.get({
+    spreadsheetId: SPREADSHEET_ID,
+    fields: 'sheets.properties(sheetId,title,hidden)'
+  });
+
+  return (metadata.data.sheets || [])
+    .map((sheet) => ({
+      id: sheet.properties.sheetId,
+      name: sheet.properties.title,
+      hidden: Boolean(sheet.properties.hidden),
+      protected: isProtectedSheetName(sheet.properties.title)
+    }))
+    .filter((sheet) => !isInternalSheetName(sheet.name))
+    .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+}
+
+export async function getVisibilitySettings(sheets) {
+  await ensureSettingsSheet(sheets);
+
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: quoteSheetName(SETTINGS_SHEET_NAME) + '!A2:B'
+  });
+
+  const settings = new Map();
+
+  for (const row of response.data.values || []) {
+    const sheetName = value(row, 0);
+    const visibleValue = normalize(value(row, 1));
+
+    if (!sheetName) {
+      continue;
+    }
+
+    settings.set(sheetName, visibleValue !== 'HAYIR');
+  }
+
+  return settings;
+}
+
+export async function setSheetVisibility(sheets, sheetName, visible) {
+  await ensureSettingsSheet(sheets);
+  const settings = await getVisibilitySettings(sheets);
+  settings.set(sheetName, Boolean(visible));
+
+  const businessSheets = await getBusinessSheetList(sheets);
+  const rows = businessSheets.map((sheet) => [
+    sheet.name,
+    settings.get(sheet.name) === false ? 'Hayır' : 'Evet'
+  ]);
+
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId: SPREADSHEET_ID,
+    range: quoteSheetName(SETTINGS_SHEET_NAME) + '!A2:B'
+  });
+
+  if (rows.length) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: quoteSheetName(SETTINGS_SHEET_NAME) + '!A2:B',
+      valueInputOption: 'RAW',
+      requestBody: { values: rows }
+    });
+  }
+}
+
+export async function hasFormNoHeader(sheets, sheetName) {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: quoteSheetName(sheetName) + '!A1:N1'
+    });
+
+    const header = response.data.values && response.data.values[0] ? response.data.values[0] : [];
+    return normalize(header[COL.formNo]) === 'FORM NO';
+  } catch (error) {
+    if (String(error.message || '').includes('Unable to parse range')) {
+      return false;
+    }
+
+    throw error;
+  }
 }
 
 export function getServiceAccountCredentials() {
@@ -95,6 +170,10 @@ export function isProtectedSheetName(sheetName) {
   return normalize(sheetName).includes('TOPLAM');
 }
 
+export function isInternalSheetName(sheetName) {
+  return sheetName === SETTINGS_SHEET_NAME;
+}
+
 export function getPublicError(error) {
   const message = error && error.message ? error.message : 'İşlem sırasında hata oluştu.';
 
@@ -111,4 +190,65 @@ export function getPublicError(error) {
   }
 
   return message;
+}
+
+async function ensureSettingsSheet(sheets) {
+  const metadata = await sheets.spreadsheets.get({
+    spreadsheetId: SPREADSHEET_ID,
+    fields: 'sheets.properties(sheetId,title,hidden)'
+  });
+
+  const existing = (metadata.data.sheets || []).find((sheet) => sheet.properties.title === SETTINGS_SHEET_NAME);
+
+  if (existing) {
+    if (!existing.properties.hidden) {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        requestBody: {
+          requests: [
+            {
+              updateSheetProperties: {
+                properties: {
+                  sheetId: existing.properties.sheetId,
+                  hidden: true
+                },
+                fields: 'hidden'
+              }
+            }
+          ]
+        }
+      });
+    }
+
+    return;
+  }
+
+  const created = await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [
+        {
+          addSheet: {
+            properties: {
+              title: SETTINGS_SHEET_NAME,
+              hidden: true
+            }
+          }
+        }
+      ]
+    }
+  });
+
+  const sheetId = created.data.replies?.[0]?.addSheet?.properties?.sheetId;
+
+  if (typeof sheetId === 'number') {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: quoteSheetName(SETTINGS_SHEET_NAME) + '!A1:B1',
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [['Sayfa', 'Göster']]
+      }
+    });
+  }
 }
