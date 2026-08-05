@@ -12,16 +12,20 @@
         <div class="hero-copy">
           <p class="eyebrow">Dijital Test Kağıdı</p>
           <h1>Test Kontrol</h1>
-          <p class="subtitle">1 tik koyar, 2 çarpı koyar. Tüm satırlar dolunca Space kağıdı temizler.</p>
+          <p class="subtitle">1 OK, 2 RED. Tüm satırlar dolunca Space yeni kağıda geçer.</p>
         </div>
         <div class="hero-stack" aria-label="Klavye kısayolları">
           <div class="hero-stat">
-            <span>Tik</span>
+            <span>OK</span>
             <strong>1</strong>
           </div>
           <div class="hero-stat accent">
-            <span>Çarpı</span>
+            <span>RED</span>
             <strong>2</strong>
+          </div>
+          <div class="hero-stat">
+            <span>Geri Al</span>
+            <strong>Back</strong>
           </div>
           <div class="hero-stat">
             <span>Temizle</span>
@@ -60,10 +64,13 @@
 
         <div class="test-progress">
           <div>
-            <span id="progressText">0 / 26 tamamlandı</span>
+            <span id="progressText">0 / 25 tamamlandı</span>
             <strong id="activeText">İlk test: Şarj</strong>
           </div>
           <button class="secondary-button" type="button" id="clearButton">Temizle</button>
+        </div>
+        <div class="test-progress-bar" aria-hidden="true">
+          <span id="progressBar"></span>
         </div>
 
         <div class="test-table" id="testTable"></div>

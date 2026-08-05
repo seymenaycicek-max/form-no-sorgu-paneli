@@ -7,13 +7,11 @@ const TEST_ITEMS = [
   'VİDA',
   'EKRAN',
   'TUŞ TAKIMI',
-  'YAN TUŞLAR',
   'SİM YUVASI ARIZA',
   'ŞEBEKE/SİM KART',
   'GELEN SES',
   'GİDEN SES',
   'SENSÖR',
-  'KULAKLIK',
   'KALEM',
   'ÖN KAMERA/VİD.SES',
   'ARKA KAMERA/VİD.SES',
@@ -25,13 +23,12 @@ const TEST_ITEMS = [
   'ZİL SESİ',
   'TİTREŞİM',
   'TOUCH ID/FACE ID',
-  'PİL SAĞLIĞI',
-  'GENEL TEMİZLİK',
-  'SIFIRLANDI'
+  'PİL SAĞLIĞI'
 ];
 
 const state = {
   activeIndex: 0,
+  history: [],
   results: Array(TEST_ITEMS.length).fill('')
 };
 
@@ -41,6 +38,7 @@ const elements = {
   redCount: document.getElementById('redCount'),
   finalStatus: document.getElementById('finalStatus'),
   progressText: document.getElementById('progressText'),
+  progressBar: document.getElementById('progressBar'),
   activeText: document.getElementById('activeText'),
   clearButton: document.getElementById('clearButton'),
   toast: document.getElementById('toast'),
@@ -62,12 +60,8 @@ function renderTable() {
 
   TEST_ITEMS.forEach((item, index) => {
     const row = document.createElement('div');
-    row.className = index === state.activeIndex ? 'test-row active' : 'test-row';
-    row.addEventListener('click', () => {
-      state.activeIndex = index;
-      renderTable();
-      updateSummary();
-    });
+    row.className = getRowClass(index);
+    row.addEventListener('click', () => setActive(index));
 
     const name = document.createElement('button');
     name.className = 'test-name';
@@ -75,9 +69,7 @@ function renderTable() {
     name.textContent = item;
     name.addEventListener('click', (event) => {
       event.stopPropagation();
-      state.activeIndex = index;
-      renderTable();
-      updateSummary();
+      setActive(index);
     });
 
     const ok = createResultButton(index, 'ok', '✓');
@@ -126,6 +118,12 @@ function handleKeyDown(event) {
     return;
   }
 
+  if (event.key === 'Backspace') {
+    event.preventDefault();
+    undoLastMark();
+    return;
+  }
+
   if (event.key === 'ArrowDown') {
     event.preventDefault();
     moveActive(1);
@@ -155,6 +153,10 @@ function markResult(index, value) {
     return;
   }
 
+  state.history.push({
+    index,
+    previous: state.results[index]
+  });
   state.results[index] = value;
   state.activeIndex = findNextEmpty(index + 1);
   renderTable();
@@ -163,6 +165,20 @@ function markResult(index, value) {
   if (isComplete()) {
     showToast('Test kağıdı doldu. Yeni cihaz için Space basın.', false);
   }
+}
+
+function undoLastMark() {
+  const last = state.history.pop();
+
+  if (!last) {
+    showToast('Geri alınacak işaret yok.', true);
+    return;
+  }
+
+  state.results[last.index] = last.previous;
+  state.activeIndex = last.index;
+  renderTable();
+  updateSummary();
 }
 
 function findNextEmpty(startIndex) {
@@ -187,22 +203,31 @@ function moveActive(direction) {
   updateSummary();
 }
 
+function setActive(index) {
+  state.activeIndex = index;
+  renderTable();
+  updateSummary();
+}
+
 function updateSummary() {
   const okCount = state.results.filter((result) => result === 'ok').length;
   const redCount = state.results.filter((result) => result === 'red').length;
   const filledCount = okCount + redCount;
+  const percent = Math.round((filledCount / TEST_ITEMS.length) * 100);
   const activeItem = TEST_ITEMS[state.activeIndex] || '-';
 
   elements.okCount.textContent = String(okCount);
   elements.redCount.textContent = String(redCount);
   elements.progressText.textContent = `${filledCount} / ${TEST_ITEMS.length} tamamlandı`;
+  elements.progressBar.style.width = `${percent}%`;
   elements.activeText.textContent = isComplete() ? 'Tüm testler doldu' : `Sıradaki test: ${activeItem}`;
   elements.finalStatus.textContent = !isComplete() ? '-' : redCount > 0 ? 'RED' : 'OK';
-  elements.finalStatus.className = redCount > 0 ? 'final-red' : 'final-ok';
+  elements.finalStatus.className = !isComplete() ? '' : redCount > 0 ? 'final-red' : 'final-ok';
 }
 
 function clearPaper() {
   state.activeIndex = 0;
+  state.history = [];
   state.results = Array(TEST_ITEMS.length).fill('');
   elements.testModel.value = '';
   elements.testGb.value = '';
@@ -215,6 +240,20 @@ function clearPaper() {
 
 function isComplete() {
   return state.results.every(Boolean);
+}
+
+function getRowClass(index) {
+  const classes = ['test-row'];
+
+  if (index === state.activeIndex) {
+    classes.push('active');
+  }
+
+  if (state.results[index]) {
+    classes.push('filled');
+  }
+
+  return classes.join(' ');
 }
 
 function getResultClass(result) {

@@ -765,7 +765,6 @@ select:focus {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  border-bottom: 2px solid #111827;
   background: #f8fafc;
   padding: 12px;
 }
@@ -786,6 +785,20 @@ select:focus {
   font-size: 18px;
 }
 
+.test-progress-bar {
+  height: 8px;
+  border-bottom: 2px solid #111827;
+  background: #e2e8f0;
+}
+
+.test-progress-bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--primary);
+  transition: width 0.16s ease;
+}
+
 .test-table {
   display: grid;
 }
@@ -802,6 +815,10 @@ select:focus {
   background: #fff7ed;
   outline: 3px solid #f97316;
   outline-offset: -3px;
+}
+
+.test-row.filled:not(.active) {
+  background: #fbfffd;
 }
 
 .test-row:last-child {
@@ -846,6 +863,12 @@ select:focus {
 
 .mark-button.red.selected {
   background: rgba(180, 35, 24, 0.1);
+}
+
+.mark-button:focus-visible,
+.test-name:focus-visible {
+  outline: 3px solid rgba(15, 118, 110, 0.3);
+  outline-offset: -3px;
 }
 
 .test-result {
@@ -903,6 +926,10 @@ select:focus {
 
   .hero-stack {
     display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .test-hero .hero-stack {
     grid-template-columns: 1fr 1fr;
   }
 
