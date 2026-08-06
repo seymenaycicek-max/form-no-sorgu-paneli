@@ -1,93 +1,311 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
   <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Kağıdı</title>
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+
+    <title>Test Kontrol | Dijital Test Kağıdı</title>
+
+    <meta
+      name="description"
+      content="Kalite kontrol işlemleri için hızlı ve klavye destekli dijital test kağıdı."
+    >
+
     <meta name="theme-color" content="#0f766e">
+    <meta name="color-scheme" content="light">
+    <meta name="application-name" content="Test Kontrol">
+
+    <!-- iPhone / iPad PWA ayarları -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    >
+    <meta name="apple-mobile-web-app-title" content="Test Kontrol">
+
+    <!-- PWA -->
     <link rel="manifest" href="/manifest.webmanifest">
-    <link rel="icon" href="/icons/icon-192.png">
-    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+    <!-- Uygulama ikonları -->
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="/icons/icon-192.png"
+    >
+
+    <link
+      rel="apple-touch-icon"
+      sizes="192x192"
+      href="/icons/icon-192.png"
+    >
+
+    <!-- Stil -->
     <link rel="stylesheet" href="/styles.css">
   </head>
+
   <body>
-    <main class="app-shell test-shell">
+    <a class="skip-link" href="#mainContent">
+      Test ekranına geç
+    </a>
+
+    <main id="mainContent" class="app-shell test-shell">
       <header class="hero test-hero">
         <div class="hero-copy">
-          <p class="eyebrow">Dijital Test Kağıdı</p>
+          <div class="eyebrow-row">
+            <p class="eyebrow">Dijital Test Kağıdı</p>
+
+            <span class="status-badge" aria-label="Uygulama hazır">
+              Hazır
+            </span>
+          </div>
+
           <h1>Test Kontrol</h1>
-          <p class="subtitle">1 OK, 2 RED. Tüm satırlar dolunca Space yeni kağıda geçer.</p>
+
+          <p class="subtitle">
+            Testleri klavye üzerinden hızlıca işaretleyin.
+            Tüm satırlar tamamlandığında
+            <kbd>Space</kbd> tuşuyla yeni test kağıdına geçin.
+          </p>
         </div>
-        <div class="hero-stack" aria-label="Klavye kısayolları">
-          <div class="hero-stat">
+
+        <div
+          class="hero-stack"
+          role="list"
+          aria-label="Klavye kısayolları"
+        >
+          <div class="hero-stat" role="listitem">
             <span>OK</span>
-            <strong>1</strong>
+            <strong>
+              <kbd>1</kbd>
+            </strong>
           </div>
-          <div class="hero-stat accent">
+
+          <div class="hero-stat accent" role="listitem">
             <span>RED</span>
-            <strong>2</strong>
+            <strong>
+              <kbd>2</kbd>
+            </strong>
           </div>
-          <div class="hero-stat">
+
+          <div class="hero-stat" role="listitem">
             <span>Geri Al</span>
-            <strong>Back</strong>
+            <strong>
+              <kbd>Backspace</kbd>
+            </strong>
           </div>
-          <div class="hero-stat">
-            <span>Temizle</span>
-            <strong>Space</strong>
+
+          <div class="hero-stat" role="listitem">
+            <span>Yeni Kağıt</span>
+            <strong>
+              <kbd>Space</kbd>
+            </strong>
           </div>
         </div>
       </header>
 
-      <section class="test-board" aria-label="Test kağıdı">
-        <div class="test-top-grid">
-          <label>
-            <span>Tarih</span>
-            <input id="testDate" autocomplete="off">
-          </label>
-          <label>
-            <span>Model</span>
-            <input id="testModel" autocomplete="off">
-          </label>
-          <label>
-            <span>GB</span>
-            <input id="testGb" autocomplete="off">
-          </label>
-          <div class="test-summary">
-            <span>OK</span>
-            <strong id="okCount">0</strong>
-          </div>
-          <div class="test-summary red">
-            <span>RED</span>
-            <strong id="redCount">0</strong>
-          </div>
-          <div class="test-summary">
-            <span>SON</span>
-            <strong id="finalStatus">-</strong>
-          </div>
-        </div>
+      <section
+        class="test-board"
+        aria-labelledby="testBoardTitle"
+      >
+        <h2 id="testBoardTitle" class="visually-hidden">
+          Cihaz test bilgileri
+        </h2>
 
-        <div class="test-progress">
-          <div>
-            <span id="progressText">0 / 25 tamamlandı</span>
-            <strong id="activeText">İlk test: Şarj</strong>
+        <form
+          id="testForm"
+          autocomplete="off"
+          novalidate
+          onsubmit="return false"
+        >
+          <div class="test-top-grid">
+            <label class="test-field" for="testDate">
+              <span>Tarih</span>
+
+              <input
+                id="testDate"
+                name="testDate"
+                type="date"
+                autocomplete="off"
+              >
+            </label>
+
+            <label class="test-field" for="testModel">
+              <span>Model</span>
+
+              <input
+                id="testModel"
+                name="testModel"
+                type="text"
+                placeholder="Örn. iPhone 13"
+                autocomplete="off"
+                autocapitalize="characters"
+                spellcheck="false"
+              >
+            </label>
+
+            <label class="test-field" for="testGb">
+              <span>Hafıza</span>
+
+              <div class="input-suffix">
+                <input
+                  id="testGb"
+                  name="testGb"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="128"
+                  autocomplete="off"
+                  spellcheck="false"
+                  aria-label="Cihaz hafızası"
+                >
+
+                <span aria-hidden="true">GB</span>
+              </div>
+            </label>
+
+            <div
+              class="test-summary"
+              aria-label="Toplam başarılı test"
+            >
+              <span>OK</span>
+
+              <strong
+                id="okCount"
+                aria-live="polite"
+              >
+                0
+              </strong>
+            </div>
+
+            <div
+              class="test-summary red"
+              aria-label="Toplam başarısız test"
+            >
+              <span>RED</span>
+
+              <strong
+                id="redCount"
+                aria-live="polite"
+              >
+                0
+              </strong>
+            </div>
+
+            <div
+              class="test-summary"
+              aria-label="Test sonucu"
+            >
+              <span>SONUÇ</span>
+
+              <strong
+                id="finalStatus"
+                aria-live="polite"
+              >
+                -
+              </strong>
+            </div>
           </div>
-          <button class="secondary-button" type="button" id="clearButton">Temizle</button>
-        </div>
-        <div class="test-progress-bar" aria-hidden="true">
-          <span id="progressBar"></span>
-        </div>
 
-        <div class="test-table" id="testTable"></div>
+          <div class="test-progress">
+            <div class="test-progress-copy">
+              <span
+                id="progressText"
+                aria-live="polite"
+              >
+                0 / 25 tamamlandı
+              </span>
 
-        <label class="test-note">
-          <span>Not</span>
-          <textarea id="testNote" rows="4" placeholder="Gerekirse not yazın"></textarea>
-        </label>
+              <strong
+                id="activeText"
+                aria-live="polite"
+              >
+                İlk test: Şarj
+              </strong>
+            </div>
+
+            <button
+              class="secondary-button"
+              type="button"
+              id="clearButton"
+              aria-controls="testTable testNote"
+            >
+              <span aria-hidden="true">↻</span>
+              Temizle
+            </button>
+          </div>
+
+          <div
+            class="test-progress-bar"
+            role="progressbar"
+            aria-label="Test tamamlanma oranı"
+            aria-valuemin="0"
+            aria-valuemax="25"
+            aria-valuenow="0"
+          >
+            <span id="progressBar"></span>
+          </div>
+
+          <div
+            class="test-table"
+            id="testTable"
+            role="grid"
+            aria-label="Cihaz testleri"
+            tabindex="0"
+          ></div>
+
+          <label class="test-note" for="testNote">
+            <span>Test Notu</span>
+
+            <textarea
+              id="testNote"
+              name="testNote"
+              rows="4"
+              maxlength="500"
+              placeholder="Cihazdaki sorunları veya gerekli açıklamaları yazın..."
+              spellcheck="true"
+            ></textarea>
+
+            <small class="field-help">
+              Bu alan isteğe bağlıdır.
+            </small>
+          </label>
+        </form>
       </section>
+
+      <footer class="test-footer">
+        <p>
+          <kbd>1</kbd> OK
+          <span aria-hidden="true">•</span>
+          <kbd>2</kbd> RED
+          <span aria-hidden="true">•</span>
+          <kbd>Backspace</kbd> Geri al
+          <span aria-hidden="true">•</span>
+          <kbd>Space</kbd> Yeni kağıt
+        </p>
+      </footer>
     </main>
 
-    <div class="toast" id="toast" role="status" hidden></div>
-    <script src="/pwa.js"></script>
-    <script src="/test.js"></script>
+    <div
+      class="toast"
+      id="toast"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      hidden
+    ></div>
+
+    <noscript>
+      <div class="noscript-warning">
+        Bu uygulamanın çalışması için JavaScript etkin olmalıdır.
+      </div>
+    </noscript>
+
+    <script src="/pwa.js" defer></script>
+    <script src="/test.js" defer></script>
   </body>
 </html>
