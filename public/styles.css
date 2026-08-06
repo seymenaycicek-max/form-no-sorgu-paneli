@@ -37,6 +37,258 @@ body {
   font-size: 16px;
 }
 
+.report-body {
+  background:
+    linear-gradient(135deg, rgba(8, 47, 73, 0.08), transparent 280px),
+    linear-gradient(180deg, #f8fbff 0, #e9eef5 100%);
+}
+
+.report-shell {
+  width: min(1180px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 24px 0 34px;
+}
+
+.report-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #0f766e;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.report-header h1 {
+  margin: 0;
+  color: #0b1220;
+  font-size: 34px;
+  line-height: 1.08;
+}
+
+.report-subtitle {
+  max-width: 720px;
+  margin: 10px 0 0;
+  color: #526070;
+  line-height: 1.45;
+}
+
+.report-controls {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid #d6e0ea;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-soft);
+}
+
+.report-controls label {
+  display: grid;
+  gap: 6px;
+  color: #465568;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.report-controls input {
+  height: 42px;
+  min-width: 160px;
+  border: 1px solid #cfd8e3;
+  border-radius: 8px;
+  padding: 0 12px;
+  color: #111827;
+  background: #fff;
+}
+
+.report-controls button {
+  height: 42px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 18px;
+  color: #fff;
+  background: #0f766e;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.report-controls button:hover {
+  background: #115e59;
+}
+
+.report-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.summary-card {
+  border: 1px solid #cfe7d6;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #f0fff4, #dcfce7);
+  padding: 16px;
+  box-shadow: var(--shadow-soft);
+}
+
+.summary-card.renewal {
+  border-color: #c7d2fe;
+  background: linear-gradient(180deg, #eef2ff, #dbeafe);
+}
+
+.summary-card.total {
+  border-color: #bae6fd;
+  background: linear-gradient(180deg, #ecfeff, #e0f2fe);
+}
+
+.summary-card span {
+  display: block;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.summary-card strong {
+  display: block;
+  margin-top: 6px;
+  color: #0f172a;
+  font-size: 36px;
+  line-height: 1;
+}
+
+.report-table-wrap {
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.report-status {
+  border-bottom: 1px solid #dbe3ec;
+  padding: 12px 14px;
+  color: #475569;
+  background: #f8fafc;
+  font-weight: 700;
+}
+
+.report-status[data-type="ok"] {
+  color: #166534;
+  background: #ecfdf3;
+}
+
+.report-status[data-type="error"] {
+  color: #b42318;
+  background: #fff1f2;
+}
+
+.mtk-report-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.mtk-report-table th,
+.mtk-report-table td {
+  border: 1px solid #263238;
+  padding: 10px 12px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.mtk-report-table thead th {
+  background: #dff7ff;
+  color: #111827;
+  text-transform: uppercase;
+}
+
+.mtk-report-table tbody th {
+  text-align: left;
+  color: inherit;
+}
+
+.mtk-report-table tbody tr.tier-high {
+  color: #fff;
+  background: #24a833;
+}
+
+.mtk-report-table tbody tr.tier-mid {
+  color: #0f172a;
+  background: #e8fbff;
+}
+
+.mtk-report-table tbody tr.tier-low {
+  color: #fff;
+  background: #f04a24;
+}
+
+.mtk-report-table tfoot th,
+.mtk-report-table tfoot td {
+  background: #ecfeff;
+  color: #0f172a;
+}
+
+@media (max-width: 760px) {
+  .report-shell {
+    width: min(100% - 16px, 1180px);
+    padding-top: 12px;
+  }
+
+  .report-header {
+    grid-template-columns: 1fr;
+  }
+
+  .report-header h1 {
+    font-size: 26px;
+  }
+
+  .report-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .report-controls input,
+  .report-controls button {
+    width: 100%;
+  }
+
+  .report-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-card {
+    padding: 13px;
+  }
+
+  .summary-card strong {
+    font-size: 30px;
+  }
+
+  .report-table-wrap {
+    overflow-x: auto;
+  }
+
+  .mtk-report-table {
+    min-width: 620px;
+  }
+
+  .mtk-report-table th,
+  .mtk-report-table td {
+    padding: 9px 10px;
+    font-size: 15px;
+  }
+}
+
 button,
 input,
 select {

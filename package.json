@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "dotenv": "^16.4.5",
-    "googleapis": "^140.0.1"
+    "googleapis": "^140.0.1",
+    "mssql": "^12.7.0"
   },
   "engines": {
     "node": ">=18"

@@ -12,6 +12,10 @@
     {
       "source": "/test",
       "destination": "/test.html"
+    },
+    {
+      "source": "/mtk-rapor",
+      "destination": "/mtk-rapor.html"
     }
   ]
 }

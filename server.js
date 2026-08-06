@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import searchHandler from './api/search.js';
 import sheetsHandler from './api/sheets.js';
+import mtkReportHandler from './api/mtk-report.js';
 
 const port = Number(process.env.PORT || 3000);
 const __filename = fileURLToPath(import.meta.url);
@@ -24,6 +25,11 @@ const server = http.createServer(async (req, res) => {
       req.query = Object.fromEntries(url.searchParams.entries());
       req.body = req.method === 'POST' || req.method === 'DELETE' ? await readJsonBody(req) : {};
       return sheetsHandler(req, createJsonResponse(res));
+    }
+
+    if (url.pathname === '/api/mtk-report') {
+      req.query = Object.fromEntries(url.searchParams.entries());
+      return mtkReportHandler(req, createJsonResponse(res));
     }
 
     return serveStatic(url.pathname, res);
@@ -80,7 +86,8 @@ function readJsonBody(req) {
 function serveStatic(urlPath, res) {
   const routeMap = {
     '/settings': '/settings.html',
-    '/test': '/test.html'
+    '/test': '/test.html',
+    '/mtk-rapor': '/mtk-rapor.html'
   };
   const routedPath = routeMap[urlPath] || urlPath;
   const cleanPath = routedPath === '/' ? '/index.html' : routedPath;

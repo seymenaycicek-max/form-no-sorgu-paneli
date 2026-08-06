@@ -35,6 +35,34 @@ Panel:
 http://localhost:3000
 ```
 
+MTK teknisyen raporu:
+
+```text
+http://localhost:3000/mtk-rapor
+```
+
+## MTK raporu
+
+`/mtk-rapor` sayfası MTK SQL veritabanından okur ve seçilen tarihte test aşamasına çekilen cihazları teknisyen bazında toplar.
+
+Gerekli ortam değişkenleri:
+
+```env
+MTK_SQL_SERVER=192.168.80.60
+MTK_SQL_DATABASE=HbServis
+MTK_SQL_USER=mtksoft
+MTK_SQL_PASSWORD=...
+MTK_SQL_PORT=1433
+```
+
+Lokal kullanımda gerçek bilgileri repoya yazmadan mevcut JSON dosyasını da okutabilirsin:
+
+```env
+MTK_SQL_CONFIG_PATH=C:\...\sql-config.json
+```
+
+Not: SQL sunucusu yerel ağ IP adresindeyse Vercel bu sunucuya doğrudan erişemez. Bu durumda rapor lokal bilgisayarda çalışır veya SQL sunucusunun güvenli şekilde dışarı açılması/VPN/tunnel gerekir.
+
 ## Okunan sayfalar
 
 - `AĞUSTOS`
