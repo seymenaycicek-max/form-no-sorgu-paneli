@@ -6,3 +6,6 @@ src-tauri/target/
 *.local
 .env
 .env.*
+certs/
+*.pfx
+*.cer

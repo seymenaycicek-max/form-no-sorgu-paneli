@@ -165,6 +165,59 @@ WebView2 indirme adresi:
 
 https://developer.microsoft.com/microsoft-edge/webview2/
 
+## 11. Self-signed imzalama
+
+Bu proje GitHub Actions içinde exe imzalamayı destekler. Resmi code signing sertifikası yoksa self-signed sertifika kullanılabilir.
+
+Self-signed imza resmi sertifika kadar güçlü değildir. Windows SmartScreen uyarısını tamamen bitirmeyebilir. Firma içi kullanım için hedef bilgisayarlara sertifika bir kere güvenilir olarak eklenmelidir.
+
+Sertifika üretme:
+
+```powershell
+cd C:\Users\saycicek\Documents\Codex\2026-08-04\anlad-m-sistem-tam-olarak-yle\web-panel\hb-kalite-kontrol-desktop
+powershell -ExecutionPolicy Bypass -File .\tools\create-self-signed-cert.ps1
+```
+
+Bu komut `certs` klasöründe şu dosyaları oluşturur:
+
+```text
+hb-kalite-kontrol-codesign.pfx
+hb-kalite-kontrol-codesign.cer
+hb-kalite-kontrol-codesign-base64.txt
+```
+
+GitHub repo ayarlarına girin:
+
+```text
+Settings > Secrets and variables > Actions > New repository secret
+```
+
+Şu iki secret eklenmelidir:
+
+```text
+WINDOWS_CERTIFICATE_PFX_BASE64
+WINDOWS_CERTIFICATE_PASSWORD
+```
+
+`WINDOWS_CERTIFICATE_PFX_BASE64` değeri için `hb-kalite-kontrol-codesign-base64.txt` dosyasının içeriğini yapıştırın.
+
+`WINDOWS_CERTIFICATE_PASSWORD` değeri için sertifikayı üretirken girdiğiniz PFX şifresini yazın.
+
+Hedef bilgisayarda sertifikayı mevcut kullanıcı için güvenilir hale getirme:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\trust-cert-current-user.ps1 -CertificatePath .\certs\hb-kalite-kontrol-codesign.cer
+```
+
+Bu işlem yönetici izni istemeden mevcut kullanıcı sertifika deposuna ekleme yapar.
+
+GitHub Actions build sonrası şu dosyaları imzalar:
+
+```text
+src-tauri\target\release\*.exe
+src-tauri\target\release\bundle\nsis\*.exe
+```
+
 ## Uygulama davranışı
 
 - Uygulama adı: `HB Kalite Kontrol`
