@@ -28,12 +28,39 @@ const TEST_ITEMS = [
 ];
 
 const BATTERY_INDEX = TEST_ITEMS.indexOf('PİL SAĞLIĞI');
+const COSMETIC_INDEX = TEST_ITEMS.indexOf('KOZMETİK');
+const BATTERY_PASS_LIMIT = 85;
+
+const COSMETIC_GRADES = [
+  {
+    value: 'A+',
+    className: 'grade-aplus'
+  },
+  {
+    value: 'A',
+    className: 'grade-a'
+  },
+  {
+    value: 'B',
+    className: 'grade-b'
+  },
+  {
+    value: 'D',
+    className: 'grade-d'
+  },
+  {
+    value: 'E',
+    className: 'grade-e'
+  }
+];
 
 const state = {
   activeIndex: 0,
   history: [],
   results: Array(TEST_ITEMS.length).fill(''),
-  batteryHealth: ''
+  batteryHealth: '',
+  cosmeticGrade: '',
+  cosmeticMenuOpen: false
 };
 
 const elements = {
@@ -53,12 +80,53 @@ const elements = {
   testNote: document.getElementById('testNote')
 };
 
-elements.clearButton.addEventListener('click', clearPaper);
-document.addEventListener('keydown', handleKeyDown);
+const requiredElements = [
+  'table',
+  'okCount',
+  'redCount',
+  'finalStatus',
+  'progressText',
+  'progressBar',
+  'activeText',
+  'clearButton',
+  'toast',
+  'testDate',
+  'testModel',
+  'testGb'
+];
 
-setToday();
-renderTable();
-updateSummary();
+const missingElements = requiredElements.filter(
+  (key) => !elements[key]
+);
+
+if (missingElements.length > 0) {
+  console.error(
+    `Test sayfasında eksik HTML elemanları var: ${missingElements.join(', ')}`
+  );
+} else {
+  startTestApp();
+}
+
+function startTestApp() {
+  elements.clearButton.addEventListener(
+    'click',
+    clearPaper
+  );
+
+  document.addEventListener(
+    'keydown',
+    handleKeyDown
+  );
+
+  document.addEventListener(
+    'click',
+    handleDocumentClick
+  );
+
+  setToday();
+  renderTable();
+  updateSummary();
+}
 
 function renderTable() {
   elements.table.innerHTML = '';
@@ -74,6 +142,10 @@ function renderTable() {
       row.classList.add('battery-row');
     }
 
+    if (index === COSMETIC_INDEX) {
+      row.classList.add('cosmetic-row');
+    }
+
     row.addEventListener('click', () => {
       setActive(index);
     });
@@ -83,6 +155,11 @@ function renderTable() {
     name.className = 'test-name';
     name.type = 'button';
     name.textContent = item;
+
+    name.setAttribute(
+      'aria-label',
+      `${item} testini aktif hale getir`
+    );
 
     name.addEventListener('click', (event) => {
       event.stopPropagation();
@@ -101,10 +178,15 @@ function renderTable() {
       '✕'
     );
 
-    const result =
-      index === BATTERY_INDEX
-        ? createBatteryHealthInput(index)
-        : createResultDisplay(index);
+    let result;
+
+    if (index === BATTERY_INDEX) {
+      result = createBatteryHealthInput(index);
+    } else if (index === COSMETIC_INDEX) {
+      result = createCosmeticGradePicker(index);
+    } else {
+      result = createResultDisplay(index);
+    }
 
     row.append(
       name,
@@ -136,11 +218,32 @@ function createResultButton(index, value, text) {
 
   button.setAttribute(
     'aria-label',
-    `${TEST_ITEMS[index]}: ${value === 'ok' ? 'OK' : 'RED'}`
+    `${TEST_ITEMS[index]}: ${
+      value === 'ok' ? 'OK' : 'RED'
+    }`
   );
 
   button.addEventListener('click', (event) => {
     event.stopPropagation();
+
+    /*
+     * Pil sağlığı sonucu elle değiştirilemez.
+     * Sonuç yüzdeye göre otomatik belirlenir.
+     */
+    if (index === BATTERY_INDEX) {
+      state.activeIndex = BATTERY_INDEX;
+
+      if (state.batteryHealth === '') {
+        showToast(
+          'Pil sağlığını girin. 85 ve üzeri OK, 84 ve altı RED olur.',
+          true
+        );
+      }
+
+      focusBatteryInput();
+      return;
+    }
+
     markResult(index, value);
   });
 
@@ -154,13 +257,32 @@ function createResultDisplay(index) {
   result.className = getResultClass(value);
   result.textContent = getResultText(value);
 
+  result.setAttribute(
+    'aria-label',
+    `${TEST_ITEMS[index]} sonucu: ${getAccessibleResultText(value)}`
+  );
+
   return result;
 }
+
+/* =========================================================
+   PİL SAĞLIĞI
+   85–100 = OK
+   0–84 = RED
+   ========================================================= */
 
 function createBatteryHealthInput(index) {
   const wrapper = document.createElement('div');
 
   wrapper.className = 'test-result battery-health-cell';
+
+  if (state.results[index] === 'ok') {
+    wrapper.classList.add('ok');
+  }
+
+  if (state.results[index] === 'red') {
+    wrapper.classList.add('red');
+  }
 
   const input = document.createElement('input');
 
@@ -170,7 +292,7 @@ function createBatteryHealthInput(index) {
   input.max = '100';
   input.step = '1';
   input.inputMode = 'numeric';
-  input.placeholder = '100';
+  input.placeholder = '85';
   input.value = state.batteryHealth;
 
   input.setAttribute(
@@ -179,6 +301,7 @@ function createBatteryHealthInput(index) {
   );
 
   const percent = document.createElement('span');
+
   percent.textContent = '%';
   percent.setAttribute('aria-hidden', 'true');
 
@@ -186,53 +309,301 @@ function createBatteryHealthInput(index) {
     event.stopPropagation();
   });
 
-  input.addEventListener('input', () => {
-    let value = input.value;
+  input.addEventListener('keydown', (event) => {
+    event.stopPropagation();
 
-    if (value !== '') {
-      const numberValue = Number(value);
-
-      if (numberValue > 100) {
-        value = '100';
-      }
-
-      if (numberValue < 0) {
-        value = '0';
-      }
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      completeBatteryEntry();
     }
+  });
 
-    input.value = value;
-    state.batteryHealth = value;
-
-    updateSummary();
+  input.addEventListener('input', () => {
+    handleBatteryInput(input, index);
   });
 
   input.addEventListener('change', () => {
-    if (state.batteryHealth === '') {
-      return;
-    }
-
-    const numberValue = Math.max(
-      0,
-      Math.min(100, Number(state.batteryHealth))
-    );
-
-    state.batteryHealth = String(numberValue);
-
-    if (state.results[index]) {
-      state.activeIndex = findNextIncomplete(
-        index + 1
-      );
-    }
-
-    renderAndUpdate();
-    showCompletionMessage();
+    completeBatteryEntry();
   });
 
   wrapper.append(input, percent);
 
   return wrapper;
 }
+
+function handleBatteryInput(input, index) {
+  let value = input.value;
+
+  if (value === '') {
+    state.batteryHealth = '';
+    state.results[index] = '';
+
+    updateBatteryVisuals(index);
+    updateSummary();
+
+    return;
+  }
+
+  let numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) {
+    return;
+  }
+
+  numberValue = Math.trunc(numberValue);
+  numberValue = Math.max(
+    0,
+    Math.min(100, numberValue)
+  );
+
+  input.value = String(numberValue);
+  state.batteryHealth = String(numberValue);
+
+  /*
+   * 85 ve üstü yeşil tik.
+   * 84 ve altı kırmızı çarpı.
+   */
+  state.results[index] =
+    numberValue >= BATTERY_PASS_LIMIT
+      ? 'ok'
+      : 'red';
+
+  updateBatteryVisuals(index);
+  updateSummary();
+}
+
+function completeBatteryEntry() {
+  if (state.batteryHealth === '') {
+    showToast(
+      'Pil sağlığı için 0 ile 100 arasında bir değer girin.',
+      true
+    );
+
+    focusBatteryInput();
+    return;
+  }
+
+  state.activeIndex = findNextIncomplete(
+    BATTERY_INDEX + 1
+  );
+
+  renderAndUpdate();
+  showCompletionMessage();
+}
+
+function updateBatteryVisuals(index) {
+  const row = elements.table.querySelector(
+    `.test-row[data-index="${index}"]`
+  );
+
+  if (!row) {
+    return;
+  }
+
+  const okButton = row.querySelector(
+    '.mark-button.ok'
+  );
+
+  const redButton = row.querySelector(
+    '.mark-button.red'
+  );
+
+  const batteryCell = row.querySelector(
+    '.battery-health-cell'
+  );
+
+  const isOk = state.results[index] === 'ok';
+  const isRed = state.results[index] === 'red';
+
+  if (okButton) {
+    okButton.classList.toggle(
+      'selected',
+      isOk
+    );
+
+    okButton.setAttribute(
+      'aria-pressed',
+      String(isOk)
+    );
+  }
+
+  if (redButton) {
+    redButton.classList.toggle(
+      'selected',
+      isRed
+    );
+
+    redButton.setAttribute(
+      'aria-pressed',
+      String(isRed)
+    );
+  }
+
+  if (batteryCell) {
+    batteryCell.classList.toggle(
+      'ok',
+      isOk
+    );
+
+    batteryCell.classList.toggle(
+      'red',
+      isRed
+    );
+  }
+
+  row.classList.toggle(
+    'filled',
+    isItemComplete(index)
+  );
+}
+
+/* =========================================================
+   KOZMETİK SINIFI
+   A+, A, B, D, E
+   ========================================================= */
+
+function createCosmeticGradePicker(index) {
+  const wrapper = document.createElement('div');
+
+  wrapper.className =
+    'test-result cosmetic-grade-cell';
+
+  const picker = document.createElement('div');
+
+  picker.className = 'cosmetic-grade-picker';
+
+  const trigger = document.createElement('button');
+
+  trigger.type = 'button';
+  trigger.className = 'cosmetic-grade-trigger';
+
+  trigger.setAttribute(
+    'aria-label',
+    'Kozmetik sınıfını seç'
+  );
+
+  trigger.setAttribute(
+    'aria-expanded',
+    String(state.cosmeticMenuOpen)
+  );
+
+  if (state.cosmeticGrade) {
+    trigger.textContent = state.cosmeticGrade;
+
+    const selectedGrade = COSMETIC_GRADES.find(
+      (grade) =>
+        grade.value === state.cosmeticGrade
+    );
+
+    if (selectedGrade) {
+      trigger.classList.add(
+        selectedGrade.className
+      );
+    }
+  } else {
+    trigger.textContent = '+';
+    trigger.classList.add('grade-empty');
+  }
+
+  trigger.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    state.activeIndex = index;
+    state.cosmeticMenuOpen =
+      !state.cosmeticMenuOpen;
+
+    renderAndUpdate();
+  });
+
+  const menu = document.createElement('div');
+
+  menu.className = state.cosmeticMenuOpen
+    ? 'cosmetic-grade-menu open'
+    : 'cosmetic-grade-menu';
+
+  COSMETIC_GRADES.forEach((grade) => {
+    const option = document.createElement('button');
+
+    option.type = 'button';
+
+    option.className =
+      `cosmetic-grade-option ${grade.className}`;
+
+    option.textContent = grade.value;
+
+    option.setAttribute(
+      'aria-label',
+      `Kozmetik sınıfı ${grade.value}`
+    );
+
+    option.setAttribute(
+      'aria-pressed',
+      String(
+        state.cosmeticGrade === grade.value
+      )
+    );
+
+    if (
+      state.cosmeticGrade === grade.value
+    ) {
+      option.classList.add('selected');
+    }
+
+    option.addEventListener(
+      'click',
+      (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        selectCosmeticGrade(
+          index,
+          grade.value
+        );
+      }
+    );
+
+    menu.appendChild(option);
+  });
+
+  picker.append(trigger, menu);
+  wrapper.appendChild(picker);
+
+  return wrapper;
+}
+
+function selectCosmeticGrade(index, grade) {
+  state.cosmeticGrade = grade;
+  state.cosmeticMenuOpen = false;
+
+  /*
+   * OK veya RED seçildiyse sonraki teste geç.
+   * Seçilmediyse kozmetik satırında kal.
+   */
+  if (state.results[index]) {
+    state.activeIndex = findNextIncomplete(
+      index + 1
+    );
+  } else {
+    state.activeIndex = index;
+  }
+
+  renderAndUpdate();
+  showCompletionMessage();
+}
+
+function handleDocumentClick() {
+  if (!state.cosmeticMenuOpen) {
+    return;
+  }
+
+  state.cosmeticMenuOpen = false;
+  renderAndUpdate();
+}
+
+/* =========================================================
+   KLAVYE KISAYOLLARI
+   ========================================================= */
 
 function handleKeyDown(event) {
   const target = event.target;
@@ -250,13 +621,37 @@ function handleKeyDown(event) {
 
   if (event.key === '1') {
     event.preventDefault();
-    markResult(state.activeIndex, 'ok');
+
+    if (
+      state.activeIndex === BATTERY_INDEX
+    ) {
+      focusBatteryInput();
+      return;
+    }
+
+    markResult(
+      state.activeIndex,
+      'ok'
+    );
+
     return;
   }
 
   if (event.key === '2') {
     event.preventDefault();
-    markResult(state.activeIndex, 'red');
+
+    if (
+      state.activeIndex === BATTERY_INDEX
+    ) {
+      focusBatteryInput();
+      return;
+    }
+
+    markResult(
+      state.activeIndex,
+      'red'
+    );
+
     return;
   }
 
@@ -283,7 +678,7 @@ function handleKeyDown(event) {
 
     if (!isComplete()) {
       showToast(
-        'Tüm testler ve pil sağlığı doldurulmalıdır.',
+        'Tüm testler, pil sağlığı ve kozmetik sınıfı doldurulmalıdır.',
         true
       );
 
@@ -294,11 +689,26 @@ function handleKeyDown(event) {
   }
 }
 
+/* =========================================================
+   TEST SONUÇLARI
+   ========================================================= */
+
 function markResult(index, value) {
   if (
     index < 0 ||
     index >= TEST_ITEMS.length
   ) {
+    return;
+  }
+
+  /*
+   * Pil sağlığı yüzdesine göre
+   * otomatik belirlenir.
+   */
+  if (index === BATTERY_INDEX) {
+    state.activeIndex = BATTERY_INDEX;
+    renderAndUpdate();
+    focusBatteryInput();
     return;
   }
 
@@ -314,20 +724,21 @@ function markResult(index, value) {
   }
 
   /*
-   * Pil sağlığı satırında OK veya RED seçildiğinde
-   * yüzde girilmemişse aynı satırda kal.
+   * Kozmetik sınıfı seçilmediyse
+   * kozmetik satırında kal ve menüyü aç.
    */
   if (
-    index === BATTERY_INDEX &&
-    state.batteryHealth === ''
+    index === COSMETIC_INDEX &&
+    state.cosmeticGrade === ''
   ) {
-    state.activeIndex = index;
+    state.activeIndex = COSMETIC_INDEX;
+    state.cosmeticMenuOpen = true;
 
     renderAndUpdate();
-    focusBatteryInput();
-
     return;
   }
+
+  state.cosmeticMenuOpen = false;
 
   state.activeIndex = findNextIncomplete(
     index + 1
@@ -349,8 +760,11 @@ function undoLastMark() {
     return;
   }
 
-  state.results[last.index] = last.previous;
+  state.results[last.index] =
+    last.previous;
+
   state.activeIndex = last.index;
+  state.cosmeticMenuOpen = false;
 
   renderAndUpdate();
 }
@@ -385,14 +799,27 @@ function isItemComplete(index) {
     return false;
   }
 
+  if (
+    index === COSMETIC_INDEX &&
+    state.cosmeticGrade === ''
+  ) {
+    return false;
+  }
+
   return true;
 }
 
 function isComplete() {
-  return TEST_ITEMS.every((item, index) => {
-    return isItemComplete(index);
-  });
+  return TEST_ITEMS.every(
+    (item, index) => {
+      return isItemComplete(index);
+    }
+  );
 }
+
+/* =========================================================
+   AKTİF SATIR
+   ========================================================= */
 
 function moveActive(direction) {
   state.activeIndex = Math.max(
@@ -403,12 +830,24 @@ function moveActive(direction) {
     )
   );
 
+  state.cosmeticMenuOpen = false;
+
   renderAndUpdate();
   scrollActiveRowIntoView();
+
+  if (
+    state.activeIndex === BATTERY_INDEX
+  ) {
+    focusBatteryInput();
+  }
 }
 
 function setActive(index) {
   state.activeIndex = index;
+
+  if (index !== COSMETIC_INDEX) {
+    state.cosmeticMenuOpen = false;
+  }
 
   renderAndUpdate();
 
@@ -422,6 +861,10 @@ function renderAndUpdate() {
   updateSummary();
 }
 
+/* =========================================================
+   ÖZET VE İLERLEME
+   ========================================================= */
+
 function updateSummary() {
   const okCount = state.results.filter(
     (result) => result === 'ok'
@@ -433,17 +876,25 @@ function updateSummary() {
 
   const completedCount = TEST_ITEMS.reduce(
     (total, item, index) => {
-      return total + (isItemComplete(index) ? 1 : 0);
+      return total + (
+        isItemComplete(index) ? 1 : 0
+      );
     },
     0
   );
 
   const percent = Math.round(
-    (completedCount / TEST_ITEMS.length) * 100
+    (
+      completedCount /
+      TEST_ITEMS.length
+    ) * 100
   );
 
-  elements.okCount.textContent = String(okCount);
-  elements.redCount.textContent = String(redCount);
+  elements.okCount.textContent =
+    String(okCount);
+
+  elements.redCount.textContent =
+    String(redCount);
 
   elements.progressText.textContent =
     `${completedCount} / ${TEST_ITEMS.length} tamamlandı`;
@@ -468,14 +919,21 @@ function updateSummary() {
       'Tüm testler tamamlandı';
   } else if (
     state.activeIndex === BATTERY_INDEX &&
-    state.results[BATTERY_INDEX] &&
     state.batteryHealth === ''
   ) {
     elements.activeText.textContent =
       'Pil sağlığı yüzdesini girin';
+  } else if (
+    state.activeIndex === COSMETIC_INDEX &&
+    state.cosmeticGrade === ''
+  ) {
+    elements.activeText.textContent =
+      'Kozmetik sınıfını seçin';
   } else {
     elements.activeText.textContent =
-      `Sıradaki test: ${TEST_ITEMS[state.activeIndex]}`;
+      `Sıradaki test: ${
+        TEST_ITEMS[state.activeIndex]
+      }`;
   }
 
   if (!isComplete()) {
@@ -485,20 +943,37 @@ function updateSummary() {
   }
 
   if (redCount > 0) {
-    elements.finalStatus.textContent = 'RED';
-    elements.finalStatus.className = 'final-red';
+    elements.finalStatus.textContent =
+      'RED';
+
+    elements.finalStatus.className =
+      'final-red';
+
     return;
   }
 
-  elements.finalStatus.textContent = 'OK';
-  elements.finalStatus.className = 'final-ok';
+  elements.finalStatus.textContent =
+    'OK';
+
+  elements.finalStatus.className =
+    'final-ok';
 }
+
+/* =========================================================
+   TEMİZLEME
+   ========================================================= */
 
 function clearPaper() {
   state.activeIndex = 0;
   state.history = [];
-  state.results = Array(TEST_ITEMS.length).fill('');
+
+  state.results = Array(
+    TEST_ITEMS.length
+  ).fill('');
+
   state.batteryHealth = '';
+  state.cosmeticGrade = '';
+  state.cosmeticMenuOpen = false;
 
   elements.testModel.value = '';
   elements.testGb.value = '';
@@ -515,6 +990,10 @@ function clearPaper() {
     false
   );
 }
+
+/* =========================================================
+   SINIF VE METİNLER
+   ========================================================= */
 
 function getRowClass(index) {
   const classes = ['test-row'];
@@ -554,6 +1033,22 @@ function getResultText(result) {
   return '';
 }
 
+function getAccessibleResultText(result) {
+  if (result === 'ok') {
+    return 'OK';
+  }
+
+  if (result === 'red') {
+    return 'RED';
+  }
+
+  return 'işaretlenmedi';
+}
+
+/* =========================================================
+   TARİH
+   ========================================================= */
+
 function setToday() {
   const now = new Date();
 
@@ -571,6 +1066,10 @@ function setToday() {
     `${year}-${month}-${day}`;
 }
 
+/* =========================================================
+   ODAK VE KAYDIRMA
+   ========================================================= */
+
 function focusBatteryInput() {
   window.requestAnimationFrame(() => {
     const input = document.querySelector(
@@ -585,9 +1084,10 @@ function focusBatteryInput() {
 }
 
 function scrollActiveRowIntoView() {
-  const activeRow = elements.table.querySelector(
-    `.test-row[data-index="${state.activeIndex}"]`
-  );
+  const activeRow =
+    elements.table.querySelector(
+      `.test-row[data-index="${state.activeIndex}"]`
+    );
 
   if (activeRow) {
     activeRow.scrollIntoView({
@@ -597,12 +1097,17 @@ function scrollActiveRowIntoView() {
   }
 }
 
+/* =========================================================
+   BİLDİRİMLER
+   ========================================================= */
+
 function showCompletionMessage() {
   if (!isComplete()) {
     return;
   }
 
-  const hasRed = state.results.includes('red');
+  const hasRed =
+    state.results.includes('red');
 
   if (hasRed) {
     showToast(
@@ -619,7 +1124,10 @@ function showCompletionMessage() {
   );
 }
 
-function showToast(message, isError = false) {
+function showToast(
+  message,
+  isError = false
+) {
   elements.toast.textContent = message;
 
   elements.toast.classList.toggle(
@@ -629,9 +1137,14 @@ function showToast(message, isError = false) {
 
   elements.toast.hidden = false;
 
-  window.clearTimeout(showToast.timer);
+  window.clearTimeout(
+    showToast.timer
+  );
 
-  showToast.timer = window.setTimeout(() => {
-    elements.toast.hidden = true;
-  }, 2800);
+  showToast.timer = window.setTimeout(
+    () => {
+      elements.toast.hidden = true;
+    },
+    2800
+  );
 }
