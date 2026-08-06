@@ -31,25 +31,17 @@ WITH ReportBase AS (
     lastMove.ophartarih,
     lastMove.opharsaat,
     lastMove.opharack,
-    CASE
-      WHEN
-        UPPER(
-          REPLACE(
-            CONCAT(
-              ' ',
-              ISNULL(k.Durumu, ''),
-              ' ',
-              ISNULL(k.onarbilgi, ''),
-              ' ',
-              ISNULL(lastMove.opharack, '')
-            ),
-            N'İ',
-            N'I'
-          )
-        ) LIKE N'%YENILEME%'
-      THEN 1
-      ELSE 0
-    END AS IsYenileme,
+    UPPER(
+      REPLACE(
+        REPLACE(
+          REPLACE(ISNULL(k.onarbilgi, ''), N'İ', N'I'),
+          N'ı',
+          N'I'
+        ),
+        N'i',
+        N'I'
+      )
+    ) AS NormalizedRepairText,
     CASE
       WHEN
         NULLIF(LTRIM(RTRIM(ISNULL(k.Teknisyen, ''))), '') IS NULL
@@ -67,25 +59,41 @@ WITH ReportBase AS (
     WHERE h.opharkayno = k.Kayitno
       AND CAST(h.ophartarih AS date) = @reportDate
       AND (
-        UPPER(REPLACE(ISNULL(h.opharack, ''), N'İ', N'I')) LIKE N'%TEST%'
-        OR UPPER(REPLACE(ISNULL(h.opharack, ''), N'İ', N'I')) LIKE N'%KALITE%'
-        OR UPPER(REPLACE(ISNULL(h.opharack, ''), N'İ', N'I')) LIKE N'%TAMAMLANDI%'
+        UPPER(REPLACE(REPLACE(REPLACE(ISNULL(h.opharack, ''), N'İ', N'I'), N'ı', N'I'), N'i', N'I')) LIKE N'%TAMAMLANDI%'
+        OR UPPER(REPLACE(REPLACE(REPLACE(ISNULL(h.opharack, ''), N'İ', N'I'), N'ı', N'I'), N'i', N'I')) LIKE N'%KALITE%'
+        OR UPPER(REPLACE(REPLACE(REPLACE(ISNULL(h.opharack, ''), N'İ', N'I'), N'ı', N'I'), N'i', N'I')) LIKE N'%KALITE KONTROL%'
       )
     ORDER BY h.ophartarih DESC, h.opharsaat DESC, h.opharno DESC
   ) lastMove
-  WHERE UPPER(REPLACE(ISNULL(k.Durumu, ''), N'İ', N'I')) LIKE N'%TEST%'
-    AND lastMove.ophartarih IS NOT NULL
+  WHERE lastMove.ophartarih IS NOT NULL
 )
 SELECT
   RaporTeknisyen AS teknisyen,
-  SUM(CASE WHEN IsYenileme = 0 THEN 1 ELSE 0 END) AS onarildi,
-  SUM(CASE WHEN IsYenileme = 1 THEN 1 ELSE 0 END) AS yenileme,
+  SUM(
+    CASE
+      WHEN NormalizedRepairText LIKE N'%ONARILDI%'
+       AND NormalizedRepairText NOT LIKE N'%YENILEME%'
+      THEN 1
+      ELSE 0
+    END
+  ) AS onarildi,
+  SUM(
+    CASE
+      WHEN NormalizedRepairText LIKE N'%YENILEME%'
+      THEN 1
+      ELSE 0
+    END
+  ) AS yenileme,
   COUNT(*) AS toplam
 FROM ReportBase
 WHERE RaporTeknisyen IS NOT NULL
   AND UPPER(RaporTeknisyen) <> 'MTKSOFT'
+  AND (
+    NormalizedRepairText LIKE N'%ONARILDI%'
+    OR NormalizedRepairText LIKE N'%YENILEME%'
+  )
 GROUP BY RaporTeknisyen
-ORDER BY COUNT(*) DESC, SUM(CASE WHEN IsYenileme = 0 THEN 1 ELSE 0 END) DESC, RaporTeknisyen ASC;
+ORDER BY COUNT(*) DESC, SUM(CASE WHEN NormalizedRepairText LIKE N'%ONARILDI%' THEN 1 ELSE 0 END) DESC, RaporTeknisyen ASC;
     `);
 
     const rows = result.recordset.map((row) => ({

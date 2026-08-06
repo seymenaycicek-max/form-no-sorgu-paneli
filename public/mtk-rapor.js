@@ -48,7 +48,7 @@ function renderReport(data) {
   renderTotals(data.totals);
 
   if (!data.rows.length) {
-    setStatus('Seçilen tarihte test aşamasına çekilen cihaz bulunamadı.', 'empty');
+    setStatus('Seçilen tarihte onarım açıklamasında onarıldı veya yenileme olan cihaz bulunamadı.', 'empty');
     return;
   }
 
