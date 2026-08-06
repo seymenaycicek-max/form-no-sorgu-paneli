@@ -20,13 +20,21 @@
     <meta name="application-name" content="Test Kontrol">
 
     <meta name="apple-mobile-web-app-capable" content="yes">
+
     <meta
       name="apple-mobile-web-app-status-bar-style"
       content="default"
     >
-    <meta name="apple-mobile-web-app-title" content="Test Kontrol">
 
-    <link rel="manifest" href="/manifest.webmanifest">
+    <meta
+      name="apple-mobile-web-app-title"
+      content="Test Kontrol"
+    >
+
+    <link
+      rel="manifest"
+      href="/manifest.webmanifest"
+    >
 
     <link
       rel="icon"
@@ -41,21 +49,35 @@
       href="/icons/icon-192.png"
     >
 
-    <link rel="stylesheet" href="/styles.css">
+    <link
+      rel="stylesheet"
+      href="/styles.css"
+    >
   </head>
 
   <body class="test-page">
-    <a class="skip-link" href="#mainContent">
+    <a
+      class="skip-link"
+      href="#mainContent"
+    >
       Test ekranına geç
     </a>
 
-    <main id="mainContent" class="app-shell test-shell">
+    <main
+      id="mainContent"
+      class="app-shell test-shell"
+    >
       <header class="hero test-hero">
         <div class="hero-copy">
           <div class="eyebrow-row">
-            <p class="eyebrow">Dijital Test Kağıdı</p>
+            <p class="eyebrow">
+              Dijital Test Kağıdı
+            </p>
 
-            <span class="test-status-badge" aria-label="Test sistemi hazır">
+            <span
+              class="test-status-badge"
+              aria-label="Test sistemi hazır"
+            >
               Sistem Hazır
             </span>
           </div>
@@ -64,7 +86,8 @@
 
           <p class="subtitle">
             Testleri klavye üzerinden hızlıca işaretleyin.
-            <kbd>1</kbd> OK, <kbd>2</kbd> RED,
+            <kbd>1</kbd> OK,
+            <kbd>2</kbd> RED,
             <kbd>Backspace</kbd> geri alır.
           </p>
         </div>
@@ -74,24 +97,44 @@
           role="list"
           aria-label="Klavye kısayolları"
         >
-          <div class="hero-stat ok-stat" role="listitem">
+          <div
+            class="hero-stat ok-stat"
+            role="listitem"
+          >
             <span>OK</span>
-            <strong><kbd>1</kbd></strong>
+            <strong>
+              <kbd>1</kbd>
+            </strong>
           </div>
 
-          <div class="hero-stat red-stat" role="listitem">
+          <div
+            class="hero-stat red-stat"
+            role="listitem"
+          >
             <span>RED</span>
-            <strong><kbd>2</kbd></strong>
+            <strong>
+              <kbd>2</kbd>
+            </strong>
           </div>
 
-          <div class="hero-stat" role="listitem">
+          <div
+            class="hero-stat"
+            role="listitem"
+          >
             <span>Geri Al</span>
-            <strong><kbd>Backspace</kbd></strong>
+            <strong>
+              <kbd>Backspace</kbd>
+            </strong>
           </div>
 
-          <div class="hero-stat" role="listitem">
+          <div
+            class="hero-stat"
+            role="listitem"
+          >
             <span>Yeni Kağıt</span>
-            <strong><kbd>Space</kbd></strong>
+            <strong>
+              <kbd>Space</kbd>
+            </strong>
           </div>
         </div>
       </header>
@@ -100,7 +143,10 @@
         class="test-board"
         aria-labelledby="testBoardTitle"
       >
-        <h2 id="testBoardTitle" class="visually-hidden">
+        <h2
+          id="testBoardTitle"
+          class="visually-hidden"
+        >
           Cihaz test bilgileri
         </h2>
 
@@ -111,7 +157,10 @@
           onsubmit="return false"
         >
           <div class="test-top-grid">
-            <label class="test-field" for="testDate">
+            <label
+              class="test-field"
+              for="testDate"
+            >
               <span>Tarih</span>
 
               <input
@@ -122,7 +171,10 @@
               >
             </label>
 
-            <label class="test-field" for="testModel">
+            <label
+              class="test-field"
+              for="testModel"
+            >
               <span>Model</span>
 
               <input
@@ -136,7 +188,10 @@
               >
             </label>
 
-            <label class="test-field" for="testGb">
+            <label
+              class="test-field"
+              for="testGb"
+            >
               <span>Hafıza</span>
 
               <div class="input-suffix">
@@ -152,7 +207,9 @@
                   aria-label="Cihaz hafızası"
                 >
 
-                <span aria-hidden="true">GB</span>
+                <span aria-hidden="true">
+                  GB
+                </span>
               </div>
             </label>
 
@@ -161,7 +218,13 @@
               aria-label="Toplam başarılı test"
             >
               <span>OK</span>
-              <strong id="okCount" aria-live="polite">0</strong>
+
+              <strong
+                id="okCount"
+                aria-live="polite"
+              >
+                0
+              </strong>
             </div>
 
             <div
@@ -169,7 +232,13 @@
               aria-label="Toplam başarısız test"
             >
               <span>RED</span>
-              <strong id="redCount" aria-live="polite">0</strong>
+
+              <strong
+                id="redCount"
+                aria-live="polite"
+              >
+                0
+              </strong>
             </div>
 
             <div
@@ -177,17 +246,29 @@
               aria-label="Test sonucu"
             >
               <span>SONUÇ</span>
-              <strong id="finalStatus" aria-live="polite">-</strong>
+
+              <strong
+                id="finalStatus"
+                aria-live="polite"
+              >
+                -
+              </strong>
             </div>
           </div>
 
           <div class="test-progress">
             <div class="test-progress-copy">
-              <span id="progressText" aria-live="polite">
-                0 / 25 tamamlandı
+              <span
+                id="progressText"
+                aria-live="polite"
+              >
+                0 / 26 tamamlandı
               </span>
 
-              <strong id="activeText" aria-live="polite">
+              <strong
+                id="activeText"
+                aria-live="polite"
+              >
                 İlk test: Şarj
               </strong>
             </div>
@@ -196,9 +277,12 @@
               class="secondary-button"
               type="button"
               id="clearButton"
-              aria-controls="testTable testNote"
+              aria-controls="testTable"
             >
-              <span aria-hidden="true">↻</span>
+              <span aria-hidden="true">
+                ↻
+              </span>
+
               Temizle
             </button>
           </div>
@@ -208,7 +292,7 @@
             role="progressbar"
             aria-label="Test tamamlanma oranı"
             aria-valuemin="0"
-            aria-valuemax="25"
+            aria-valuemax="26"
             aria-valuenow="0"
           >
             <span id="progressBar"></span>
@@ -221,13 +305,25 @@
             aria-label="Cihaz testleri"
             tabindex="0"
           ></div>
+
+          <!--
+            test.js bu alanı aradığı için gizli olarak tutuluyor.
+            Ekranda görünmez.
+          -->
+          <textarea
+            id="testNote"
+            name="testNote"
+            hidden
+            aria-hidden="true"
+            tabindex="-1"
+          ></textarea>
         </form>
       </section>
 
       <footer class="test-footer">
         <p>
-          Genel tema açık mavidir.
-          OK sonuçları yeşil, RED sonuçları kırmızı gösterilir.
+          OK sonuçları yeşil,
+          RED sonuçları kırmızı gösterilir.
         </p>
       </footer>
     </main>
@@ -247,7 +343,14 @@
       </div>
     </noscript>
 
-    <script src="/pwa.js" defer></script>
-    <script src="/test.js" defer></script>
+    <script
+      src="/pwa.js"
+      defer
+    ></script>
+
+    <script
+      src="/test.js"
+      defer
+    ></script>
   </body>
 </html>
