@@ -25,6 +25,7 @@ WITH TestMoves AS (
     k.takipno,
     k.Model,
     k.onarbilgi,
+    k.Onarbittar,
     h.ophartarih,
     h.opharsaat,
     h.opharack,
@@ -82,6 +83,7 @@ WITH TestMoves AS (
   FROM oprhar h
   INNER JOIN Kayit k ON k.Kayitno = h.opharkayno
   WHERE CAST(h.ophartarih AS date) = @reportDate
+    AND CAST(k.Onarbittar AS date) = @reportDate
     AND UPPER(
       REPLACE(
         REPLACE(
@@ -93,6 +95,29 @@ WITH TestMoves AS (
         N'I'
       )
     ) LIKE N'%TEST%'
+    AND NOT EXISTS (
+      SELECT 1
+      FROM oprhar failMove
+      WHERE failMove.opharkayno = k.Kayitno
+        AND (
+          failMove.ophartarih > h.ophartarih
+          OR (
+            failMove.ophartarih = h.ophartarih
+            AND ISNULL(failMove.opharsaat, '') >= ISNULL(h.opharsaat, '')
+          )
+        )
+        AND UPPER(
+          REPLACE(
+            REPLACE(
+              REPLACE(ISNULL(failMove.opharack, ''), N'İ', N'I'),
+              N'ı',
+              N'I'
+            ),
+            N'i',
+            N'I'
+          )
+        ) LIKE N'%KALDI%'
+    )
 )
 SELECT
   RaporTeknisyen AS teknisyen,
