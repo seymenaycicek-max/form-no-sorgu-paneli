@@ -19,18 +19,16 @@ export default async function handler(req, res) {
     request.input('reportDate', sql.Date, dateText);
 
     const result = await request.query(`
-WITH ReportBase AS (
+WITH TestMoves AS (
   SELECT
     k.Kayitno,
     k.takipno,
     k.Model,
-    k.Durumu,
-    k.Teknisyen,
-    k.sonislem,
     k.onarbilgi,
-    lastMove.ophartarih,
-    lastMove.opharsaat,
-    lastMove.opharack,
+    h.ophartarih,
+    h.opharsaat,
+    h.opharack,
+    NULLIF(LTRIM(RTRIM(ISNULL(h.opharuser, ''))), '') AS RaporTeknisyen,
     UPPER(
       REPLACE(
         REPLACE(
@@ -42,30 +40,59 @@ WITH ReportBase AS (
         N'I'
       )
     ) AS NormalizedRepairText,
-    CASE
-      WHEN
-        NULLIF(LTRIM(RTRIM(ISNULL(k.Teknisyen, ''))), '') IS NULL
-        OR UPPER(LTRIM(RTRIM(ISNULL(k.Teknisyen, '')))) = 'MTKSOFT'
-      THEN NULLIF(LTRIM(RTRIM(ISNULL(k.sonislem, ''))), '')
-      ELSE NULLIF(LTRIM(RTRIM(ISNULL(k.Teknisyen, ''))), '')
-    END AS RaporTeknisyen
-  FROM Kayit k
-  OUTER APPLY (
-    SELECT TOP 1
-      h.ophartarih,
-      h.opharsaat,
-      h.opharack
-    FROM oprhar h
-    WHERE h.opharkayno = k.Kayitno
-      AND CAST(h.ophartarih AS date) = @reportDate
-      AND (
-        UPPER(REPLACE(REPLACE(REPLACE(ISNULL(h.opharack, ''), N'İ', N'I'), N'ı', N'I'), N'i', N'I')) LIKE N'%TAMAMLANDI%'
-        OR UPPER(REPLACE(REPLACE(REPLACE(ISNULL(h.opharack, ''), N'İ', N'I'), N'ı', N'I'), N'i', N'I')) LIKE N'%KALITE%'
-        OR UPPER(REPLACE(REPLACE(REPLACE(ISNULL(h.opharack, ''), N'İ', N'I'), N'ı', N'I'), N'i', N'I')) LIKE N'%KALITE KONTROL%'
+    UPPER(
+      REPLACE(
+        REPLACE(
+          REPLACE(
+            REPLACE(
+              REPLACE(
+                REPLACE(
+                  REPLACE(
+                    REPLACE(
+                      REPLACE(
+                        REPLACE(ISNULL(h.opharuser, ''), N'İ', N'I'),
+                        N'ı',
+                        N'I'
+                      ),
+                      N'i',
+                      N'I'
+                    ),
+                    N'Ş',
+                    N'S'
+                  ),
+                  N'ş',
+                  N'S'
+                ),
+                N'Ç',
+                N'C'
+              ),
+              N'ç',
+              N'C'
+            ),
+            N'Ğ',
+            N'G'
+          ),
+          N'ğ',
+          N'G'
+        ),
+        N'Ü',
+        N'U'
       )
-    ORDER BY h.ophartarih DESC, h.opharsaat DESC, h.opharno DESC
-  ) lastMove
-  WHERE lastMove.ophartarih IS NOT NULL
+    ) AS NormalizedUser
+  FROM oprhar h
+  INNER JOIN Kayit k ON k.Kayitno = h.opharkayno
+  WHERE CAST(h.ophartarih AS date) = @reportDate
+    AND UPPER(
+      REPLACE(
+        REPLACE(
+          REPLACE(ISNULL(h.opharack, ''), N'İ', N'I'),
+          N'ı',
+          N'I'
+        ),
+        N'i',
+        N'I'
+      )
+    ) LIKE N'%TEST%'
 )
 SELECT
   RaporTeknisyen AS teknisyen,
@@ -83,25 +110,40 @@ SELECT
       THEN 1
       ELSE 0
     END
-  ) AS yenileme,
-  COUNT(*) AS toplam
-FROM ReportBase
+  ) AS yenileme
+FROM TestMoves
 WHERE RaporTeknisyen IS NOT NULL
-  AND UPPER(RaporTeknisyen) <> 'MTKSOFT'
+  AND NormalizedUser <> N'MTKSOFT'
+  AND NormalizedUser NOT IN (
+    N'UGURCAN SARGIN',
+    N'AHMET TASCI',
+    N'IYAD SHUMAIS'
+  )
   AND (
     NormalizedRepairText LIKE N'%ONARILDI%'
     OR NormalizedRepairText LIKE N'%YENILEME%'
   )
 GROUP BY RaporTeknisyen
-ORDER BY COUNT(*) DESC, SUM(CASE WHEN NormalizedRepairText LIKE N'%ONARILDI%' THEN 1 ELSE 0 END) DESC, RaporTeknisyen ASC;
+ORDER BY
+  (
+    SUM(CASE WHEN NormalizedRepairText LIKE N'%ONARILDI%' AND NormalizedRepairText NOT LIKE N'%YENILEME%' THEN 1 ELSE 0 END)
+    + SUM(CASE WHEN NormalizedRepairText LIKE N'%YENILEME%' THEN 1 ELSE 0 END)
+  ) DESC,
+  SUM(CASE WHEN NormalizedRepairText LIKE N'%ONARILDI%' THEN 1 ELSE 0 END) DESC,
+  RaporTeknisyen ASC;
     `);
 
-    const rows = result.recordset.map((row) => ({
-      teknisyen: row.teknisyen,
-      onarildi: Number(row.onarildi || 0),
-      yenileme: Number(row.yenileme || 0),
-      toplam: Number(row.toplam || 0)
-    }));
+    const rows = result.recordset.map((row) => {
+      const onarildi = Number(row.onarildi || 0);
+      const yenileme = Number(row.yenileme || 0);
+
+      return {
+        teknisyen: row.teknisyen,
+        onarildi,
+        yenileme,
+        toplam: onarildi + yenileme
+      };
+    });
 
     return res.status(200).json({
       date: dateText,
