@@ -107,6 +107,10 @@ if (missingElements.length > 0) {
   startTestApp();
 }
 
+/* =========================================================
+   UYGULAMAYI BAŞLAT
+   ========================================================= */
+
 function startTestApp() {
   elements.clearButton.addEventListener(
     'click',
@@ -127,6 +131,10 @@ function startTestApp() {
   renderTable();
   updateSummary();
 }
+
+/* =========================================================
+   TABLOYU OLUŞTUR
+   ========================================================= */
 
 function renderTable() {
   elements.table.innerHTML = '';
@@ -178,26 +186,30 @@ function renderTable() {
       '✕'
     );
 
-    let result;
+    let resultArea;
 
     if (index === BATTERY_INDEX) {
-      result = createBatteryHealthInput(index);
+      resultArea = createBatteryHealthInput(index);
     } else if (index === COSMETIC_INDEX) {
-      result = createCosmeticGradePicker(index);
+      resultArea = createCosmeticGradePicker(index);
     } else {
-      result = createResultDisplay(index);
+      resultArea = createResultDisplay(index);
     }
 
     row.append(
       name,
       okButton,
       redButton,
-      result
+      resultArea
     );
 
     elements.table.appendChild(row);
   });
 }
+
+/* =========================================================
+   OK VE RED BUTONLARI
+   ========================================================= */
 
 function createResultButton(index, value, text) {
   const button = document.createElement('button');
@@ -227,20 +239,21 @@ function createResultButton(index, value, text) {
     event.stopPropagation();
 
     /*
-     * Pil sağlığı sonucu elle değiştirilemez.
-     * Sonuç yüzdeye göre otomatik belirlenir.
+     * Pil sağlığında OK ve RED elle seçilmez.
+     * Yüzdeye göre otomatik belirlenir.
      */
     if (index === BATTERY_INDEX) {
       state.activeIndex = BATTERY_INDEX;
+      state.cosmeticMenuOpen = false;
 
-      if (state.batteryHealth === '') {
-        showToast(
-          'Pil sağlığını girin. 85 ve üzeri OK, 84 ve altı RED olur.',
-          true
-        );
-      }
-
+      renderAndUpdate();
       focusBatteryInput();
+
+      showToast(
+        'Pil sağlığı yüzdesini yazıp Enter tuşuna basın.',
+        false
+      );
+
       return;
     }
 
@@ -249,6 +262,10 @@ function createResultButton(index, value, text) {
 
   return button;
 }
+
+/* =========================================================
+   NORMAL SONUÇ ALANI
+   ========================================================= */
 
 function createResultDisplay(index) {
   const result = document.createElement('div');
@@ -267,14 +284,15 @@ function createResultDisplay(index) {
 
 /* =========================================================
    PİL SAĞLIĞI
-   85–100 = OK
-   0–84 = RED
+   85–100 = YEŞİL OK
+   0–84 = KIRMIZI RED
    ========================================================= */
 
 function createBatteryHealthInput(index) {
   const wrapper = document.createElement('div');
 
-  wrapper.className = 'test-result battery-health-cell';
+  wrapper.className =
+    'test-result battery-health-cell';
 
   if (state.results[index] === 'ok') {
     wrapper.classList.add('ok');
@@ -309,7 +327,16 @@ function createBatteryHealthInput(index) {
     event.stopPropagation();
   });
 
+  input.addEventListener('focus', () => {
+    state.activeIndex = BATTERY_INDEX;
+    updateSummary();
+  });
+
   input.addEventListener('keydown', (event) => {
+    /*
+     * Pil alanına sayı yazarken genel 1 ve 2
+     * kısayollarının çalışmasını engeller.
+     */
     event.stopPropagation();
 
     if (event.key === 'Enter') {
@@ -322,10 +349,6 @@ function createBatteryHealthInput(index) {
     handleBatteryInput(input, index);
   });
 
-  input.addEventListener('change', () => {
-    completeBatteryEntry();
-  });
-
   wrapper.append(input, percent);
 
   return wrapper;
@@ -334,6 +357,9 @@ function createBatteryHealthInput(index) {
 function handleBatteryInput(input, index) {
   let value = input.value;
 
+  /*
+   * Alan boşaltılırsa pil sonucu da temizlenir.
+   */
   if (value === '') {
     state.batteryHealth = '';
     state.results[index] = '';
@@ -350,6 +376,10 @@ function handleBatteryInput(input, index) {
     return;
   }
 
+  /*
+   * Ondalık değeri tam sayıya çevir.
+   * Değeri 0 ile 100 arasında tut.
+   */
   numberValue = Math.trunc(numberValue);
   numberValue = Math.max(
     0,
@@ -360,8 +390,8 @@ function handleBatteryInput(input, index) {
   state.batteryHealth = String(numberValue);
 
   /*
-   * 85 ve üstü yeşil tik.
-   * 84 ve altı kırmızı çarpı.
+   * 85 ve üzeri otomatik yeşil tik.
+   * 84 ve altı otomatik kırmızı çarpı.
    */
   state.results[index] =
     numberValue >= BATTERY_PASS_LIMIT
@@ -383,11 +413,42 @@ function completeBatteryEntry() {
     return;
   }
 
+  const batteryValue = Number(
+    state.batteryHealth
+  );
+
+  if (
+    !Number.isFinite(batteryValue) ||
+    batteryValue < 0 ||
+    batteryValue > 100
+  ) {
+    showToast(
+      'Pil sağlığı 0 ile 100 arasında olmalıdır.',
+      true
+    );
+
+    focusBatteryInput();
+    return;
+  }
+
+  /*
+   * Enter basıldığında sonucu kesinleştir.
+   */
+  state.results[BATTERY_INDEX] =
+    batteryValue >= BATTERY_PASS_LIMIT
+      ? 'ok'
+      : 'red';
+
+  /*
+   * Pil sağlığından sonraki eksik teste geç.
+   */
   state.activeIndex = findNextIncomplete(
     BATTERY_INDEX + 1
   );
 
   renderAndUpdate();
+  scrollActiveRowIntoView();
+  focusActiveSpecialArea();
   showCompletionMessage();
 }
 
@@ -510,6 +571,7 @@ function createCosmeticGradePicker(index) {
     event.stopPropagation();
 
     state.activeIndex = index;
+
     state.cosmeticMenuOpen =
       !state.cosmeticMenuOpen;
 
@@ -577,23 +639,38 @@ function selectCosmeticGrade(index, grade) {
   state.cosmeticMenuOpen = false;
 
   /*
-   * OK veya RED seçildiyse sonraki teste geç.
-   * Seçilmediyse kozmetik satırında kal.
+   * Kozmetik OK veya RED seçilmişse
+   * bir sonraki teste geç.
    */
   if (state.results[index]) {
     state.activeIndex = findNextIncomplete(
       index + 1
     );
   } else {
+    /*
+     * OK veya RED seçilmediyse
+     * kozmetik satırında kal.
+     */
     state.activeIndex = index;
   }
 
   renderAndUpdate();
+  scrollActiveRowIntoView();
+  focusActiveSpecialArea();
   showCompletionMessage();
 }
 
-function handleDocumentClick() {
+function handleDocumentClick(event) {
   if (!state.cosmeticMenuOpen) {
+    return;
+  }
+
+  const clickedInsideMenu =
+    event.target.closest(
+      '.cosmetic-grade-picker'
+    );
+
+  if (clickedInsideMenu) {
     return;
   }
 
@@ -603,6 +680,8 @@ function handleDocumentClick() {
 
 /* =========================================================
    KLAVYE KISAYOLLARI
+   1 = OK
+   2 = RED
    ========================================================= */
 
 function handleKeyDown(event) {
@@ -615,6 +694,10 @@ function handleKeyDown(event) {
     tagName === 'select' ||
     target.isContentEditable;
 
+  /*
+   * Input veya textarea içindeyken
+   * genel kısayolları çalıştırma.
+   */
   if (isTyping) {
     return;
   }
@@ -622,9 +705,16 @@ function handleKeyDown(event) {
   if (event.key === '1') {
     event.preventDefault();
 
-    if (
-      state.activeIndex === BATTERY_INDEX
-    ) {
+    /*
+     * Aktif satır pil sağlığıysa
+     * sayı alanını otomatik seç.
+     */
+    if (state.activeIndex === BATTERY_INDEX) {
+      showToast(
+        'Pil sağlığı yüzdesini yazıp Enter tuşuna basın.',
+        false
+      );
+
       focusBatteryInput();
       return;
     }
@@ -640,9 +730,16 @@ function handleKeyDown(event) {
   if (event.key === '2') {
     event.preventDefault();
 
-    if (
-      state.activeIndex === BATTERY_INDEX
-    ) {
+    /*
+     * Aktif satır pil sağlığıysa
+     * sayı alanını otomatik seç.
+     */
+    if (state.activeIndex === BATTERY_INDEX) {
+      showToast(
+        'Pil sağlığı yüzdesini yazıp Enter tuşuna basın.',
+        false
+      );
+
       focusBatteryInput();
       return;
     }
@@ -678,7 +775,7 @@ function handleKeyDown(event) {
 
     if (!isComplete()) {
       showToast(
-        'Tüm testler, pil sağlığı ve kozmetik sınıfı doldurulmalıdır.',
+        'Tüm testler, kozmetik sınıfı ve pil sağlığı doldurulmalıdır.',
         true
       );
 
@@ -690,7 +787,7 @@ function handleKeyDown(event) {
 }
 
 /* =========================================================
-   TEST SONUÇLARI
+   TEST İŞARETLEME
    ========================================================= */
 
 function markResult(index, value) {
@@ -702,13 +799,21 @@ function markResult(index, value) {
   }
 
   /*
-   * Pil sağlığı yüzdesine göre
-   * otomatik belirlenir.
+   * Pil sağlığında 1 veya 2 ile işaretleme yok.
+   * Yüzde alanı otomatik seçilir.
    */
   if (index === BATTERY_INDEX) {
     state.activeIndex = BATTERY_INDEX;
+    state.cosmeticMenuOpen = false;
+
     renderAndUpdate();
     focusBatteryInput();
+
+    showToast(
+      'Pil sağlığı yüzdesini yazıp Enter tuşuna basın.',
+      false
+    );
+
     return;
   }
 
@@ -716,6 +821,7 @@ function markResult(index, value) {
 
   if (previous !== value) {
     state.history.push({
+      type: 'result',
       index,
       previous
     });
@@ -724,8 +830,8 @@ function markResult(index, value) {
   }
 
   /*
-   * Kozmetik sınıfı seçilmediyse
-   * kozmetik satırında kal ve menüyü aç.
+   * Kozmetik satırındaysa ve sınıf
+   * seçilmediyse menüyü otomatik aç.
    */
   if (
     index === COSMETIC_INDEX &&
@@ -735,6 +841,12 @@ function markResult(index, value) {
     state.cosmeticMenuOpen = true;
 
     renderAndUpdate();
+
+    showToast(
+      'Kozmetik sınıfını seçin.',
+      false
+    );
+
     return;
   }
 
@@ -745,8 +857,30 @@ function markResult(index, value) {
   );
 
   renderAndUpdate();
+  scrollActiveRowIntoView();
+
+  /*
+   * Sonraki satır pil sağlığıysa
+   * sayı alanını otomatik seç.
+   */
+  if (state.activeIndex === BATTERY_INDEX) {
+    focusBatteryInput();
+
+    showToast(
+      'Pil sağlığı yüzdesini girin. Enter ile devam edin.',
+      false
+    );
+
+    return;
+  }
+
+  focusActiveSpecialArea();
   showCompletionMessage();
 }
+
+/* =========================================================
+   GERİ AL
+   ========================================================= */
 
 function undoLastMark() {
   const last = state.history.pop();
@@ -760,14 +894,23 @@ function undoLastMark() {
     return;
   }
 
-  state.results[last.index] =
-    last.previous;
+  if (last.type === 'result') {
+    state.results[last.index] =
+      last.previous;
 
-  state.activeIndex = last.index;
+    state.activeIndex = last.index;
+  }
+
   state.cosmeticMenuOpen = false;
 
   renderAndUpdate();
+  scrollActiveRowIntoView();
+  focusActiveSpecialArea();
 }
+
+/* =========================================================
+   SONRAKİ EKSİK TESTİ BUL
+   ========================================================= */
 
 function findNextIncomplete(startIndex) {
   for (
@@ -786,6 +929,10 @@ function findNextIncomplete(startIndex) {
 
   return TEST_ITEMS.length - 1;
 }
+
+/* =========================================================
+   TEST TAMAMLANMA KONTROLÜ
+   ========================================================= */
 
 function isItemComplete(index) {
   if (!state.results[index]) {
@@ -834,12 +981,7 @@ function moveActive(direction) {
 
   renderAndUpdate();
   scrollActiveRowIntoView();
-
-  if (
-    state.activeIndex === BATTERY_INDEX
-  ) {
-    focusBatteryInput();
-  }
+  focusActiveSpecialArea();
 }
 
 function setActive(index) {
@@ -850,11 +992,19 @@ function setActive(index) {
   }
 
   renderAndUpdate();
+  scrollActiveRowIntoView();
+  focusActiveSpecialArea();
+}
 
-  if (index === BATTERY_INDEX) {
+function focusActiveSpecialArea() {
+  if (state.activeIndex === BATTERY_INDEX) {
     focusBatteryInput();
   }
 }
+
+/* =========================================================
+   EKRANI GÜNCELLE
+   ========================================================= */
 
 function renderAndUpdate() {
   renderTable();
@@ -862,7 +1012,7 @@ function renderAndUpdate() {
 }
 
 /* =========================================================
-   ÖZET VE İLERLEME
+   ÖZET, SAYILAR VE İLERLEME ÇUBUĞU
    ========================================================= */
 
 function updateSummary() {
@@ -922,7 +1072,7 @@ function updateSummary() {
     state.batteryHealth === ''
   ) {
     elements.activeText.textContent =
-      'Pil sağlığı yüzdesini girin';
+      'Pil sağlığı yüzdesini yazıp Enter tuşuna basın';
   } else if (
     state.activeIndex === COSMETIC_INDEX &&
     state.cosmeticGrade === ''
@@ -960,7 +1110,7 @@ function updateSummary() {
 }
 
 /* =========================================================
-   TEMİZLEME
+   KAĞIDI TEMİZLE
    ========================================================= */
 
 function clearPaper() {
@@ -992,7 +1142,7 @@ function clearPaper() {
 }
 
 /* =========================================================
-   SINIF VE METİNLER
+   CSS SINIFLARI
    ========================================================= */
 
 function getRowClass(index) {
@@ -1067,7 +1217,7 @@ function setToday() {
 }
 
 /* =========================================================
-   ODAK VE KAYDIRMA
+   PİL ALANINA ODAKLAN
    ========================================================= */
 
 function focusBatteryInput() {
@@ -1076,29 +1226,48 @@ function focusBatteryInput() {
       '.battery-health-input'
     );
 
-    if (input) {
-      input.focus();
-      input.select();
+    if (!input) {
+      return;
+    }
+
+    input.focus();
+    input.select();
+
+    const row = input.closest('.test-row');
+
+    if (row) {
+      row.scrollIntoView({
+        block: 'center',
+        behavior: 'smooth'
+      });
     }
   });
 }
 
-function scrollActiveRowIntoView() {
-  const activeRow =
-    elements.table.querySelector(
-      `.test-row[data-index="${state.activeIndex}"]`
-    );
+/* =========================================================
+   AKTİF SATIRI EKRANA GETİR
+   ========================================================= */
 
-  if (activeRow) {
+function scrollActiveRowIntoView() {
+  window.requestAnimationFrame(() => {
+    const activeRow =
+      elements.table.querySelector(
+        `.test-row[data-index="${state.activeIndex}"]`
+      );
+
+    if (!activeRow) {
+      return;
+    }
+
     activeRow.scrollIntoView({
       block: 'nearest',
       behavior: 'smooth'
     });
-  }
+  });
 }
 
 /* =========================================================
-   BİLDİRİMLER
+   TEST TAMAMLANDI BİLDİRİMİ
    ========================================================= */
 
 function showCompletionMessage() {
@@ -1123,6 +1292,10 @@ function showCompletionMessage() {
     false
   );
 }
+
+/* =========================================================
+   BİLDİRİM
+   ========================================================= */
 
 function showToast(
   message,
