@@ -1,0 +1,18 @@
+[package]
+name = "hb-kalite-kontrol"
+version = "1.0.0"
+description = "HB Kalite Kontrol Windows uygulaması"
+authors = ["HB"]
+edition = "2021"
+license = "UNLICENSED"
+
+[lib]
+name = "hb_kalite_kontrol_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-single-instance = "2"
