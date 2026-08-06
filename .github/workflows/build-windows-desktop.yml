@@ -2,6 +2,9 @@ name: Windows Desktop EXE Build
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
