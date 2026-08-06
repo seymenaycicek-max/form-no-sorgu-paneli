@@ -2908,3 +2908,74 @@ kbd {
     padding: 7px;
   }
 }
+
+
+/* Pil sağlığı yüzde alanı */
+.battery-health-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px;
+  background: #e0f2fe;
+}
+
+.battery-health-input {
+  width: 52px;
+  min-height: 34px;
+  border: 1px solid #7dd3fc;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0369a1;
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 900;
+  text-align: center;
+  outline: none;
+  appearance: textfield;
+}
+
+.battery-health-input:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+}
+
+.battery-health-input::-webkit-inner-spin-button,
+.battery-health-input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.battery-health-cell span {
+  color: #0369a1;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.battery-row:has(.mark-button.ok.selected)
+.battery-health-cell {
+  background: #dcfce7;
+}
+
+.battery-row:has(.mark-button.red.selected)
+.battery-health-cell {
+  background: #fee2e2;
+}
+
+@media (max-width: 680px) {
+  .battery-health-cell {
+    gap: 1px;
+    padding: 2px;
+  }
+
+  .battery-health-input {
+    width: 35px;
+    min-height: 30px;
+    padding: 0 1px;
+    font-size: 12px;
+  }
+
+  .battery-health-cell span {
+    font-size: 11px;
+  }
+}

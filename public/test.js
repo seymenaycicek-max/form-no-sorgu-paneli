@@ -27,10 +27,13 @@ const TEST_ITEMS = [
   'GENEL TEMİZLİK'
 ];
 
+const BATTERY_INDEX = TEST_ITEMS.indexOf('PİL SAĞLIĞI');
+
 const state = {
   activeIndex: 0,
   history: [],
-  results: Array(TEST_ITEMS.length).fill('')
+  results: Array(TEST_ITEMS.length).fill(''),
+  batteryHealth: ''
 };
 
 const elements = {
@@ -50,42 +53,12 @@ const elements = {
   testNote: document.getElementById('testNote')
 };
 
-const requiredElements = [
-  'table',
-  'okCount',
-  'redCount',
-  'finalStatus',
-  'progressText',
-  'progressBar',
-  'activeText',
-  'clearButton',
-  'toast',
-  'testDate',
-  'testModel',
-  'testGb',
-  'testNote'
-];
+elements.clearButton.addEventListener('click', clearPaper);
+document.addEventListener('keydown', handleKeyDown);
 
-const missingElements = requiredElements.filter(
-  (key) => !elements[key]
-);
-
-if (missingElements.length > 0) {
-  console.error(
-    `Test sayfasında eksik HTML elemanları var: ${missingElements.join(', ')}`
-  );
-} else {
-  startTestApp();
-}
-
-function startTestApp() {
-  elements.clearButton.addEventListener('click', clearPaper);
-  document.addEventListener('keydown', handleKeyDown);
-
-  setToday();
-  renderTable();
-  updateSummary();
-}
+setToday();
+renderTable();
+updateSummary();
 
 function renderTable() {
   elements.table.innerHTML = '';
@@ -97,6 +70,10 @@ function renderTable() {
     row.dataset.index = String(index);
     row.setAttribute('role', 'row');
 
+    if (index === BATTERY_INDEX) {
+      row.classList.add('battery-row');
+    }
+
     row.addEventListener('click', () => {
       setActive(index);
     });
@@ -106,11 +83,6 @@ function renderTable() {
     name.className = 'test-name';
     name.type = 'button';
     name.textContent = item;
-    name.setAttribute('role', 'gridcell');
-    name.setAttribute(
-      'aria-label',
-      `${item} testini aktif hale getir`
-    );
 
     name.addEventListener('click', (event) => {
       event.stopPropagation();
@@ -120,35 +92,19 @@ function renderTable() {
     const okButton = createResultButton(
       index,
       'ok',
-      '✓',
-      `${item}: OK`
+      '✓'
     );
 
     const redButton = createResultButton(
       index,
       'red',
-      '✕',
-      `${item}: RED`
+      '✕'
     );
 
-    const result = document.createElement('div');
-
-    result.className = getResultClass(
-      state.results[index]
-    );
-
-    result.textContent = getResultText(
-      state.results[index]
-    );
-
-    result.setAttribute('role', 'gridcell');
-
-    result.setAttribute(
-      'aria-label',
-      `${item} sonucu: ${getAccessibleResultText(
-        state.results[index]
-      )}`
-    );
+    const result =
+      index === BATTERY_INDEX
+        ? createBatteryHealthInput(index)
+        : createResultDisplay(index);
 
     row.append(
       name,
@@ -161,36 +117,26 @@ function renderTable() {
   });
 }
 
-function createResultButton(
-  index,
-  value,
-  text,
-  ariaLabel
-) {
+function createResultButton(index, value, text) {
   const button = document.createElement('button');
-  const isSelected = state.results[index] === value;
+  const selected = state.results[index] === value;
 
   button.type = 'button';
 
-  button.className = isSelected
+  button.className = selected
     ? `mark-button ${value} selected`
     : `mark-button ${value}`;
 
   button.textContent = text;
 
   button.setAttribute(
-    'role',
-    'gridcell'
+    'aria-pressed',
+    String(selected)
   );
 
   button.setAttribute(
     'aria-label',
-    ariaLabel
-  );
-
-  button.setAttribute(
-    'aria-pressed',
-    String(isSelected)
+    `${TEST_ITEMS[index]}: ${value === 'ok' ? 'OK' : 'RED'}`
   );
 
   button.addEventListener('click', (event) => {
@@ -199,6 +145,93 @@ function createResultButton(
   });
 
   return button;
+}
+
+function createResultDisplay(index) {
+  const result = document.createElement('div');
+  const value = state.results[index];
+
+  result.className = getResultClass(value);
+  result.textContent = getResultText(value);
+
+  return result;
+}
+
+function createBatteryHealthInput(index) {
+  const wrapper = document.createElement('div');
+
+  wrapper.className = 'test-result battery-health-cell';
+
+  const input = document.createElement('input');
+
+  input.type = 'number';
+  input.className = 'battery-health-input';
+  input.min = '0';
+  input.max = '100';
+  input.step = '1';
+  input.inputMode = 'numeric';
+  input.placeholder = '100';
+  input.value = state.batteryHealth;
+
+  input.setAttribute(
+    'aria-label',
+    'Pil sağlığı yüzdesi'
+  );
+
+  const percent = document.createElement('span');
+  percent.textContent = '%';
+  percent.setAttribute('aria-hidden', 'true');
+
+  input.addEventListener('click', (event) => {
+    event.stopPropagation();
+  });
+
+  input.addEventListener('input', () => {
+    let value = input.value;
+
+    if (value !== '') {
+      const numberValue = Number(value);
+
+      if (numberValue > 100) {
+        value = '100';
+      }
+
+      if (numberValue < 0) {
+        value = '0';
+      }
+    }
+
+    input.value = value;
+    state.batteryHealth = value;
+
+    updateSummary();
+  });
+
+  input.addEventListener('change', () => {
+    if (state.batteryHealth === '') {
+      return;
+    }
+
+    const numberValue = Math.max(
+      0,
+      Math.min(100, Number(state.batteryHealth))
+    );
+
+    state.batteryHealth = String(numberValue);
+
+    if (state.results[index]) {
+      state.activeIndex = findNextIncomplete(
+        index + 1
+      );
+    }
+
+    renderAndUpdate();
+    showCompletionMessage();
+  });
+
+  wrapper.append(input, percent);
+
+  return wrapper;
 }
 
 function handleKeyDown(event) {
@@ -250,7 +283,7 @@ function handleKeyDown(event) {
 
     if (!isComplete()) {
       showToast(
-        'Tüm test satırları dolmadan yeni kağıda geçilemez.',
+        'Tüm testler ve pil sağlığı doldurulmalıdır.',
         true
       );
 
@@ -271,47 +304,37 @@ function markResult(index, value) {
 
   const previous = state.results[index];
 
+  if (previous !== value) {
+    state.history.push({
+      index,
+      previous
+    });
+
+    state.results[index] = value;
+  }
+
   /*
-   * Aynı işarete tekrar basılırsa
-   * gereksiz geri alma kaydı oluşturma.
+   * Pil sağlığı satırında OK veya RED seçildiğinde
+   * yüzde girilmemişse aynı satırda kal.
    */
-  if (previous === value) {
-    state.activeIndex = findNextEmpty(
-      index + 1
-    );
+  if (
+    index === BATTERY_INDEX &&
+    state.batteryHealth === ''
+  ) {
+    state.activeIndex = index;
 
     renderAndUpdate();
+    focusBatteryInput();
+
     return;
   }
 
-  state.history.push({
-    index,
-    previous
-  });
-
-  state.results[index] = value;
-
-  state.activeIndex = findNextEmpty(
+  state.activeIndex = findNextIncomplete(
     index + 1
   );
 
   renderAndUpdate();
-
-  if (isComplete()) {
-    const hasRed = state.results.includes('red');
-
-    if (hasRed) {
-      showToast(
-        'Test tamamlandı: Cihaz RED kaldı. Yeni cihaz için Space basın.',
-        true
-      );
-    } else {
-      showToast(
-        'Test tamamlandı: Cihaz OK geçti. Yeni cihaz için Space basın.',
-        false
-      );
-    }
-  }
+  showCompletionMessage();
 }
 
 function undoLastMark() {
@@ -332,31 +355,43 @@ function undoLastMark() {
   renderAndUpdate();
 }
 
-function findNextEmpty(startIndex) {
+function findNextIncomplete(startIndex) {
   for (
-    let index = startIndex;
-    index < state.results.length;
-    index += 1
+    let offset = 0;
+    offset < TEST_ITEMS.length;
+    offset += 1
   ) {
-    if (!state.results[index]) {
+    const index =
+      (startIndex + offset) %
+      TEST_ITEMS.length;
+
+    if (!isItemComplete(index)) {
       return index;
     }
   }
 
-  for (
-    let index = 0;
-    index < Math.min(
-      startIndex,
-      state.results.length
-    );
-    index += 1
-  ) {
-    if (!state.results[index]) {
-      return index;
-    }
+  return TEST_ITEMS.length - 1;
+}
+
+function isItemComplete(index) {
+  if (!state.results[index]) {
+    return false;
   }
 
-  return state.results.length - 1;
+  if (
+    index === BATTERY_INDEX &&
+    state.batteryHealth === ''
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function isComplete() {
+  return TEST_ITEMS.every((item, index) => {
+    return isItemComplete(index);
+  });
 }
 
 function moveActive(direction) {
@@ -376,6 +411,10 @@ function setActive(index) {
   state.activeIndex = index;
 
   renderAndUpdate();
+
+  if (index === BATTERY_INDEX) {
+    focusBatteryInput();
+  }
 }
 
 function renderAndUpdate() {
@@ -392,25 +431,22 @@ function updateSummary() {
     (result) => result === 'red'
   ).length;
 
-  const filledCount = okCount + redCount;
-
-  const percent = Math.round(
-    (filledCount / TEST_ITEMS.length) * 100
+  const completedCount = TEST_ITEMS.reduce(
+    (total, item, index) => {
+      return total + (isItemComplete(index) ? 1 : 0);
+    },
+    0
   );
 
-  const activeItem =
-    TEST_ITEMS[state.activeIndex] || '-';
+  const percent = Math.round(
+    (completedCount / TEST_ITEMS.length) * 100
+  );
 
-  const complete = isComplete();
-
-  elements.okCount.textContent =
-    String(okCount);
-
-  elements.redCount.textContent =
-    String(redCount);
+  elements.okCount.textContent = String(okCount);
+  elements.redCount.textContent = String(redCount);
 
   elements.progressText.textContent =
-    `${filledCount} / ${TEST_ITEMS.length} tamamlandı`;
+    `${completedCount} / ${TEST_ITEMS.length} tamamlandı`;
 
   elements.progressBar.style.width =
     `${percent}%`;
@@ -418,7 +454,7 @@ function updateSummary() {
   if (elements.progressContainer) {
     elements.progressContainer.setAttribute(
       'aria-valuenow',
-      String(filledCount)
+      String(completedCount)
     );
 
     elements.progressContainer.setAttribute(
@@ -427,11 +463,22 @@ function updateSummary() {
     );
   }
 
-  elements.activeText.textContent = complete
-    ? 'Tüm testler tamamlandı'
-    : `Sıradaki test: ${activeItem}`;
+  if (isComplete()) {
+    elements.activeText.textContent =
+      'Tüm testler tamamlandı';
+  } else if (
+    state.activeIndex === BATTERY_INDEX &&
+    state.results[BATTERY_INDEX] &&
+    state.batteryHealth === ''
+  ) {
+    elements.activeText.textContent =
+      'Pil sağlığı yüzdesini girin';
+  } else {
+    elements.activeText.textContent =
+      `Sıradaki test: ${TEST_ITEMS[state.activeIndex]}`;
+  }
 
-  if (!complete) {
+  if (!isComplete()) {
     elements.finalStatus.textContent = '-';
     elements.finalStatus.className = '';
     return;
@@ -450,14 +497,15 @@ function updateSummary() {
 function clearPaper() {
   state.activeIndex = 0;
   state.history = [];
-
-  state.results = Array(
-    TEST_ITEMS.length
-  ).fill('');
+  state.results = Array(TEST_ITEMS.length).fill('');
+  state.batteryHealth = '';
 
   elements.testModel.value = '';
   elements.testGb.value = '';
-  elements.testNote.value = '';
+
+  if (elements.testNote) {
+    elements.testNote.value = '';
+  }
 
   setToday();
   renderAndUpdate();
@@ -468,10 +516,6 @@ function clearPaper() {
   );
 }
 
-function isComplete() {
-  return state.results.every(Boolean);
-}
-
 function getRowClass(index) {
   const classes = ['test-row'];
 
@@ -479,7 +523,7 @@ function getRowClass(index) {
     classes.push('active');
   }
 
-  if (state.results[index]) {
+  if (isItemComplete(index)) {
     classes.push('filled');
   }
 
@@ -510,18 +554,6 @@ function getResultText(result) {
   return '';
 }
 
-function getAccessibleResultText(result) {
-  if (result === 'ok') {
-    return 'OK';
-  }
-
-  if (result === 'red') {
-    return 'RED';
-  }
-
-  return 'işaretlenmedi';
-}
-
 function setToday() {
   const now = new Date();
 
@@ -535,12 +567,21 @@ function setToday() {
     now.getDate()
   ).padStart(2, '0');
 
-  /*
-   * input type="date" yalnızca
-   * YYYY-MM-DD formatını kabul eder.
-   */
   elements.testDate.value =
     `${year}-${month}-${day}`;
+}
+
+function focusBatteryInput() {
+  window.requestAnimationFrame(() => {
+    const input = document.querySelector(
+      '.battery-health-input'
+    );
+
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  });
 }
 
 function scrollActiveRowIntoView() {
@@ -556,10 +597,29 @@ function scrollActiveRowIntoView() {
   }
 }
 
-function showToast(
-  message,
-  isError = false
-) {
+function showCompletionMessage() {
+  if (!isComplete()) {
+    return;
+  }
+
+  const hasRed = state.results.includes('red');
+
+  if (hasRed) {
+    showToast(
+      'Test tamamlandı: Cihaz RED kaldı.',
+      true
+    );
+
+    return;
+  }
+
+  showToast(
+    'Test tamamlandı: Cihaz OK geçti.',
+    false
+  );
+}
+
+function showToast(message, isError = false) {
   elements.toast.textContent = message;
 
   elements.toast.classList.toggle(
@@ -569,9 +629,7 @@ function showToast(
 
   elements.toast.hidden = false;
 
-  window.clearTimeout(
-    showToast.timer
-  );
+  window.clearTimeout(showToast.timer);
 
   showToast.timer = window.setTimeout(() => {
     elements.toast.hidden = true;
