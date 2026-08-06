@@ -23,7 +23,8 @@ const TEST_ITEMS = [
   'ZİL SESİ',
   'TİTREŞİM',
   'TOUCH ID/FACE ID',
-  'PİL SAĞLIĞI'
+  'PİL SAĞLIĞI',
+  'GENEL TEMİZLİK'
 ];
 
 const state = {
@@ -39,6 +40,7 @@ const elements = {
   finalStatus: document.getElementById('finalStatus'),
   progressText: document.getElementById('progressText'),
   progressBar: document.getElementById('progressBar'),
+  progressContainer: document.querySelector('.test-progress-bar'),
   activeText: document.getElementById('activeText'),
   clearButton: document.getElementById('clearButton'),
   toast: document.getElementById('toast'),
@@ -48,59 +50,166 @@ const elements = {
   testNote: document.getElementById('testNote')
 };
 
-elements.clearButton.addEventListener('click', clearPaper);
-document.addEventListener('keydown', handleKeyDown);
+const requiredElements = [
+  'table',
+  'okCount',
+  'redCount',
+  'finalStatus',
+  'progressText',
+  'progressBar',
+  'activeText',
+  'clearButton',
+  'toast',
+  'testDate',
+  'testModel',
+  'testGb',
+  'testNote'
+];
 
-setToday();
-renderTable();
-updateSummary();
+const missingElements = requiredElements.filter(
+  (key) => !elements[key]
+);
+
+if (missingElements.length > 0) {
+  console.error(
+    `Test sayfasında eksik HTML elemanları var: ${missingElements.join(', ')}`
+  );
+} else {
+  startTestApp();
+}
+
+function startTestApp() {
+  elements.clearButton.addEventListener('click', clearPaper);
+  document.addEventListener('keydown', handleKeyDown);
+
+  setToday();
+  renderTable();
+  updateSummary();
+}
 
 function renderTable() {
   elements.table.innerHTML = '';
 
   TEST_ITEMS.forEach((item, index) => {
     const row = document.createElement('div');
+
     row.className = getRowClass(index);
-    row.addEventListener('click', () => setActive(index));
+    row.dataset.index = String(index);
+    row.setAttribute('role', 'row');
+
+    row.addEventListener('click', () => {
+      setActive(index);
+    });
 
     const name = document.createElement('button');
+
     name.className = 'test-name';
     name.type = 'button';
     name.textContent = item;
+    name.setAttribute('role', 'gridcell');
+    name.setAttribute(
+      'aria-label',
+      `${item} testini aktif hale getir`
+    );
+
     name.addEventListener('click', (event) => {
       event.stopPropagation();
       setActive(index);
     });
 
-    const ok = createResultButton(index, 'ok', '✓');
-    const red = createResultButton(index, 'red', '✕');
-    const result = document.createElement('div');
-    result.className = getResultClass(state.results[index]);
-    result.textContent = getResultText(state.results[index]);
+    const okButton = createResultButton(
+      index,
+      'ok',
+      '✓',
+      `${item}: OK`
+    );
 
-    row.appendChild(name);
-    row.appendChild(ok);
-    row.appendChild(red);
-    row.appendChild(result);
+    const redButton = createResultButton(
+      index,
+      'red',
+      '✕',
+      `${item}: RED`
+    );
+
+    const result = document.createElement('div');
+
+    result.className = getResultClass(
+      state.results[index]
+    );
+
+    result.textContent = getResultText(
+      state.results[index]
+    );
+
+    result.setAttribute('role', 'gridcell');
+
+    result.setAttribute(
+      'aria-label',
+      `${item} sonucu: ${getAccessibleResultText(
+        state.results[index]
+      )}`
+    );
+
+    row.append(
+      name,
+      okButton,
+      redButton,
+      result
+    );
+
     elements.table.appendChild(row);
   });
 }
 
-function createResultButton(index, value, text) {
+function createResultButton(
+  index,
+  value,
+  text,
+  ariaLabel
+) {
   const button = document.createElement('button');
+  const isSelected = state.results[index] === value;
+
   button.type = 'button';
-  button.className = state.results[index] === value ? `mark-button ${value} selected` : `mark-button ${value}`;
+
+  button.className = isSelected
+    ? `mark-button ${value} selected`
+    : `mark-button ${value}`;
+
   button.textContent = text;
+
+  button.setAttribute(
+    'role',
+    'gridcell'
+  );
+
+  button.setAttribute(
+    'aria-label',
+    ariaLabel
+  );
+
+  button.setAttribute(
+    'aria-pressed',
+    String(isSelected)
+  );
+
   button.addEventListener('click', (event) => {
     event.stopPropagation();
     markResult(index, value);
   });
+
   return button;
 }
 
 function handleKeyDown(event) {
-  const tagName = event.target.tagName.toLowerCase();
-  const isTyping = tagName === 'input' || tagName === 'textarea';
+  const target = event.target;
+  const tagName = target.tagName.toLowerCase();
+
+  const isTyping =
+    tagName === 'input' ||
+    tagName === 'textarea' ||
+    tagName === 'select' ||
+    target.isContentEditable;
 
   if (isTyping) {
     return;
@@ -140,7 +249,11 @@ function handleKeyDown(event) {
     event.preventDefault();
 
     if (!isComplete()) {
-      showToast('Tüm test satırları dolmadan Space temizlemez.', true);
+      showToast(
+        'Tüm test satırları dolmadan yeni kağıda geçilemez.',
+        true
+      );
+
       return;
     }
 
@@ -149,21 +262,55 @@ function handleKeyDown(event) {
 }
 
 function markResult(index, value) {
-  if (index < 0 || index >= TEST_ITEMS.length) {
+  if (
+    index < 0 ||
+    index >= TEST_ITEMS.length
+  ) {
+    return;
+  }
+
+  const previous = state.results[index];
+
+  /*
+   * Aynı işarete tekrar basılırsa
+   * gereksiz geri alma kaydı oluşturma.
+   */
+  if (previous === value) {
+    state.activeIndex = findNextEmpty(
+      index + 1
+    );
+
+    renderAndUpdate();
     return;
   }
 
   state.history.push({
     index,
-    previous: state.results[index]
+    previous
   });
+
   state.results[index] = value;
-  state.activeIndex = findNextEmpty(index + 1);
-  renderTable();
-  updateSummary();
+
+  state.activeIndex = findNextEmpty(
+    index + 1
+  );
+
+  renderAndUpdate();
 
   if (isComplete()) {
-    showToast('Test kağıdı doldu. Yeni cihaz için Space basın.', false);
+    const hasRed = state.results.includes('red');
+
+    if (hasRed) {
+      showToast(
+        'Test tamamlandı: Cihaz RED kaldı. Yeni cihaz için Space basın.',
+        true
+      );
+    } else {
+      showToast(
+        'Test tamamlandı: Cihaz OK geçti. Yeni cihaz için Space basın.',
+        false
+      );
+    }
   }
 }
 
@@ -171,24 +318,39 @@ function undoLastMark() {
   const last = state.history.pop();
 
   if (!last) {
-    showToast('Geri alınacak işaret yok.', true);
+    showToast(
+      'Geri alınacak işaret yok.',
+      true
+    );
+
     return;
   }
 
   state.results[last.index] = last.previous;
   state.activeIndex = last.index;
-  renderTable();
-  updateSummary();
+
+  renderAndUpdate();
 }
 
 function findNextEmpty(startIndex) {
-  for (let index = startIndex; index < state.results.length; index += 1) {
+  for (
+    let index = startIndex;
+    index < state.results.length;
+    index += 1
+  ) {
     if (!state.results[index]) {
       return index;
     }
   }
 
-  for (let index = 0; index < startIndex; index += 1) {
+  for (
+    let index = 0;
+    index < Math.min(
+      startIndex,
+      state.results.length
+    );
+    index += 1
+  ) {
     if (!state.results[index]) {
       return index;
     }
@@ -198,44 +360,112 @@ function findNextEmpty(startIndex) {
 }
 
 function moveActive(direction) {
-  state.activeIndex = Math.max(0, Math.min(TEST_ITEMS.length - 1, state.activeIndex + direction));
-  renderTable();
-  updateSummary();
+  state.activeIndex = Math.max(
+    0,
+    Math.min(
+      TEST_ITEMS.length - 1,
+      state.activeIndex + direction
+    )
+  );
+
+  renderAndUpdate();
+  scrollActiveRowIntoView();
 }
 
 function setActive(index) {
   state.activeIndex = index;
+
+  renderAndUpdate();
+}
+
+function renderAndUpdate() {
   renderTable();
   updateSummary();
 }
 
 function updateSummary() {
-  const okCount = state.results.filter((result) => result === 'ok').length;
-  const redCount = state.results.filter((result) => result === 'red').length;
-  const filledCount = okCount + redCount;
-  const percent = Math.round((filledCount / TEST_ITEMS.length) * 100);
-  const activeItem = TEST_ITEMS[state.activeIndex] || '-';
+  const okCount = state.results.filter(
+    (result) => result === 'ok'
+  ).length;
 
-  elements.okCount.textContent = String(okCount);
-  elements.redCount.textContent = String(redCount);
-  elements.progressText.textContent = `${filledCount} / ${TEST_ITEMS.length} tamamlandı`;
-  elements.progressBar.style.width = `${percent}%`;
-  elements.activeText.textContent = isComplete() ? 'Tüm testler doldu' : `Sıradaki test: ${activeItem}`;
-  elements.finalStatus.textContent = !isComplete() ? '-' : redCount > 0 ? 'RED' : 'OK';
-  elements.finalStatus.className = !isComplete() ? '' : redCount > 0 ? 'final-red' : 'final-ok';
+  const redCount = state.results.filter(
+    (result) => result === 'red'
+  ).length;
+
+  const filledCount = okCount + redCount;
+
+  const percent = Math.round(
+    (filledCount / TEST_ITEMS.length) * 100
+  );
+
+  const activeItem =
+    TEST_ITEMS[state.activeIndex] || '-';
+
+  const complete = isComplete();
+
+  elements.okCount.textContent =
+    String(okCount);
+
+  elements.redCount.textContent =
+    String(redCount);
+
+  elements.progressText.textContent =
+    `${filledCount} / ${TEST_ITEMS.length} tamamlandı`;
+
+  elements.progressBar.style.width =
+    `${percent}%`;
+
+  if (elements.progressContainer) {
+    elements.progressContainer.setAttribute(
+      'aria-valuenow',
+      String(filledCount)
+    );
+
+    elements.progressContainer.setAttribute(
+      'aria-valuemax',
+      String(TEST_ITEMS.length)
+    );
+  }
+
+  elements.activeText.textContent = complete
+    ? 'Tüm testler tamamlandı'
+    : `Sıradaki test: ${activeItem}`;
+
+  if (!complete) {
+    elements.finalStatus.textContent = '-';
+    elements.finalStatus.className = '';
+    return;
+  }
+
+  if (redCount > 0) {
+    elements.finalStatus.textContent = 'RED';
+    elements.finalStatus.className = 'final-red';
+    return;
+  }
+
+  elements.finalStatus.textContent = 'OK';
+  elements.finalStatus.className = 'final-ok';
 }
 
 function clearPaper() {
   state.activeIndex = 0;
   state.history = [];
-  state.results = Array(TEST_ITEMS.length).fill('');
+
+  state.results = Array(
+    TEST_ITEMS.length
+  ).fill('');
+
   elements.testModel.value = '';
   elements.testGb.value = '';
   elements.testNote.value = '';
+
   setToday();
-  renderTable();
-  updateSummary();
-  showToast('Kağıt temizlendi. Yeni cihaza geçebilirsiniz.', false);
+  renderAndUpdate();
+
+  showToast(
+    'Kağıt temizlendi. Yeni cihaza geçebilirsiniz.',
+    false
+  );
 }
 
 function isComplete() {
@@ -257,28 +487,92 @@ function getRowClass(index) {
 }
 
 function getResultClass(result) {
-  if (result === 'ok') return 'test-result ok';
-  if (result === 'red') return 'test-result red';
+  if (result === 'ok') {
+    return 'test-result ok';
+  }
+
+  if (result === 'red') {
+    return 'test-result red';
+  }
+
   return 'test-result';
 }
 
 function getResultText(result) {
-  if (result === 'ok') return '✓';
-  if (result === 'red') return '✕';
+  if (result === 'ok') {
+    return '✓';
+  }
+
+  if (result === 'red') {
+    return '✕';
+  }
+
   return '';
+}
+
+function getAccessibleResultText(result) {
+  if (result === 'ok') {
+    return 'OK';
+  }
+
+  if (result === 'red') {
+    return 'RED';
+  }
+
+  return 'işaretlenmedi';
 }
 
 function setToday() {
   const now = new Date();
-  elements.testDate.value = now.toLocaleDateString('tr-TR');
+
+  const year = now.getFullYear();
+
+  const month = String(
+    now.getMonth() + 1
+  ).padStart(2, '0');
+
+  const day = String(
+    now.getDate()
+  ).padStart(2, '0');
+
+  /*
+   * input type="date" yalnızca
+   * YYYY-MM-DD formatını kabul eder.
+   */
+  elements.testDate.value =
+    `${year}-${month}-${day}`;
 }
 
-function showToast(message, isError) {
+function scrollActiveRowIntoView() {
+  const activeRow = elements.table.querySelector(
+    `.test-row[data-index="${state.activeIndex}"]`
+  );
+
+  if (activeRow) {
+    activeRow.scrollIntoView({
+      block: 'nearest',
+      behavior: 'smooth'
+    });
+  }
+}
+
+function showToast(
+  message,
+  isError = false
+) {
   elements.toast.textContent = message;
-  elements.toast.classList.toggle('error', Boolean(isError));
+
+  elements.toast.classList.toggle(
+    'error',
+    Boolean(isError)
+  );
+
   elements.toast.hidden = false;
 
-  window.clearTimeout(showToast.timer);
+  window.clearTimeout(
+    showToast.timer
+  );
+
   showToast.timer = window.setTimeout(() => {
     elements.toast.hidden = true;
   }, 2800);
