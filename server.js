@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import http from 'http';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import searchHandler from './api/search.js';
@@ -8,6 +9,7 @@ import sheetsHandler from './api/sheets.js';
 import mtkReportHandler from './api/mtk-report.js';
 
 const port = Number(process.env.PORT || 3000);
+const host = process.env.HOST || '0.0.0.0';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.join(__dirname, 'public');
@@ -40,7 +42,11 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(port, () => {
+server.listen(port, host, () => {
+  console.log(`MTK raporu: http://localhost:${port}/mtk-rapor`);
+  getLocalIpAddresses().forEach((address) => {
+    console.log(`Agdan giris: http://${address}:${port}/mtk-rapor`);
+  });
   console.log(`Form No Sorgu Paneli http://localhost:${port} adresinde çalışıyor.`);
 });
 
@@ -115,4 +121,11 @@ function getContentType(filePath) {
   if (filePath.endsWith('.css')) return 'text/css; charset=utf-8';
   if (filePath.endsWith('.js')) return 'text/javascript; charset=utf-8';
   return 'application/octet-stream';
+}
+
+function getLocalIpAddresses() {
+  return Object.values(os.networkInterfaces())
+    .flat()
+    .filter((item) => item && item.family === 'IPv4' && !item.internal)
+    .map((item) => item.address);
 }
