@@ -10,6 +10,9 @@ jobs:
   build:
     name: Build HB Kalite Kontrol
     runs-on: windows-latest
+    env:
+      WINDOWS_CERTIFICATE_PFX_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_PFX_BASE64 }}
+      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
     defaults:
       run:
         working-directory: hb-kalite-kontrol-desktop
@@ -35,11 +38,8 @@ jobs:
         run: npm run tauri build
 
       - name: Sign Windows executables
-        if: ${{ secrets.WINDOWS_CERTIFICATE_PFX_BASE64 != '' && secrets.WINDOWS_CERTIFICATE_PASSWORD != '' }}
+        if: ${{ env.WINDOWS_CERTIFICATE_PFX_BASE64 != '' && env.WINDOWS_CERTIFICATE_PASSWORD != '' }}
         shell: pwsh
-        env:
-          WINDOWS_CERTIFICATE_PFX_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_PFX_BASE64 }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
         run: |
           $ErrorActionPreference = "Stop"
           $certificatePath = Join-Path $env:RUNNER_TEMP "hb-kalite-kontrol-signing.pfx"
@@ -51,7 +51,7 @@ jobs:
             Select-Object -First 1
 
           if (-not $signtool) {
-            throw "signtool.exe bulunamadı."
+            throw "signtool.exe not found."
           }
 
           $files = @()
