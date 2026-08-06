@@ -87,7 +87,8 @@ function serveStatic(urlPath, res) {
   const routeMap = {
     '/settings': '/settings.html',
     '/test': '/test.html',
-    '/mtk-rapor': '/mtk-rapor.html'
+    '/mtk-rapor': '/mtk-rapor.html',
+    '/mtk-rapor/': '/mtk-rapor.html'
   };
   const routedPath = routeMap[urlPath] || urlPath;
   const cleanPath = routedPath === '/' ? '/index.html' : routedPath;

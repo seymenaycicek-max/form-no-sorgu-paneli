@@ -16,6 +16,10 @@
     {
       "source": "/mtk-rapor",
       "destination": "/mtk-rapor.html"
+    },
+    {
+      "source": "/mtk-rapor/",
+      "destination": "/mtk-rapor.html"
     }
   ]
 }
