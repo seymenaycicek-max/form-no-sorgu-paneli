@@ -3428,3 +3428,104 @@ kbd {
     max-width: calc(100vw - 12px);
   }
 }
+
+/* =========================================================
+   SONUÇ KARTI ROZETLERİ
+   ========================================================= */
+
+.result-header-badges {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* =========================================================
+   PKA – PARÇA KAYNAKLI ARIZA
+   ========================================================= */
+
+.pka-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  border: 1px solid #fb923c;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #c2410c;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  box-shadow:
+    0 4px 12px
+    rgba(249, 115, 22, 0.12);
+}
+
+.pka-warning {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  border: 1px solid #fdba74;
+  border-radius: 14px;
+  background:
+    linear-gradient(
+      135deg,
+      #fff7ed,
+      #ffedd5
+    );
+  padding: 12px 14px;
+  color: #9a3412;
+}
+
+.pka-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background:
+    linear-gradient(
+      145deg,
+      #fb923c,
+      #ea580c
+    );
+  color: #ffffff;
+  font-size: 19px;
+  font-weight: 900;
+  box-shadow:
+    0 5px 12px
+    rgba(234, 88, 12, 0.22);
+}
+
+.pka-warning > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pka-warning strong {
+  color: #9a3412;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.pka-warning div span {
+  color: #c2410c;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+@media (max-width: 680px) {
+  .result-header-badges {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .pka-warning {
+    align-items: flex-start;
+  }
+}
