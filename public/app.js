@@ -326,9 +326,6 @@ function createPkaWarning() {
   const description =
     document.createElement('span');
 
-  description.textContent =
-    'Bu cihaz Google Sheets üzerinde PKA olarak işaretlenmiştir.';
-
   copy.append(
     title,
     description
