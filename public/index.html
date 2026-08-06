@@ -1,70 +1,260 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
   <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form No Sorgu</title>
-    <meta name="theme-color" content="#0f766e">
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+
+    <title>Form No Sorgu | Servis Paneli</title>
+
+    <meta
+      name="description"
+      content="Google Sheets kayıtlarında form numarasına göre cihaz bilgilerini hızlıca sorgulayın."
+    >
+
+    <meta name="theme-color" content="#38bdf8">
+    <meta name="color-scheme" content="light">
+    <meta name="application-name" content="Form No Sorgu">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="default"
+    >
+    <meta name="apple-mobile-web-app-title" content="Form Sorgu">
+
     <link rel="manifest" href="/manifest.webmanifest">
-    <link rel="icon" href="/icons/icon-192.png">
-    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="/icons/icon-192.png"
+    >
+
+    <link
+      rel="apple-touch-icon"
+      sizes="192x192"
+      href="/icons/icon-192.png"
+    >
+
     <link rel="stylesheet" href="/styles.css">
   </head>
-  <body>
-    <main class="app-shell">
-      <header class="hero">
+
+  <body class="search-page">
+    <a class="skip-link" href="#mainContent">
+      Arama bölümüne geç
+    </a>
+
+    <main id="mainContent" class="app-shell query-shell">
+      <header class="hero query-hero">
         <div class="hero-copy">
-          <p class="eyebrow">Servis Sorgu Paneli</p>
-          <h1>Form No Bulma</h1>
-          <p class="subtitle">Form numarasını yaz, cihaz bilgilerini hızlı ve düzenli şekilde görüntüle.</p>
-        </div>
-        <div class="hero-stack" aria-label="Sistem kaynakları">
-          <div class="hero-stat">
-            <span>Kaynak</span>
-            <strong>Sheets</strong>
+          <div class="eyebrow-row">
+            <p class="eyebrow">Servis Sorgu Paneli</p>
+
+            <span class="query-status-badge" aria-label="Sistem çevrimiçi">
+              Sistem Hazır
+            </span>
           </div>
-          <div class="hero-stat accent">
-            <span>Yetki</span>
+
+          <h1>Form No Bulma</h1>
+
+          <p class="subtitle">
+            Form numarasını girerek cihaz bilgilerini hızlı,
+            düzenli ve güvenli şekilde görüntüleyin.
+          </p>
+        </div>
+
+        <div
+          class="hero-stack query-stats"
+          role="list"
+          aria-label="Sistem özellikleri"
+        >
+          <div class="hero-stat" role="listitem">
+            <span>Veri Kaynağı</span>
+            <strong>Google Sheets</strong>
+          </div>
+
+          <div class="hero-stat accent" role="listitem">
+            <span>Erişim Türü</span>
             <strong>Sadece Oku</strong>
+          </div>
+
+          <div class="hero-stat" role="listitem">
+            <span>İşlem</span>
+            <strong>Hızlı Sorgu</strong>
           </div>
         </div>
       </header>
 
-      <section class="search-panel">
+      <section
+        class="search-panel query-search-panel"
+        aria-labelledby="searchTitle"
+      >
         <div class="search-copy">
-          <p class="eyebrow">Hızlı Arama</p>
-          <h2>Cihaz Ara</h2>
-          <p class="panel-note">Google Sheets kayıtlarında form no eşleşmesi aranır.</p>
+          <div class="search-icon" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              width="28"
+              height="28"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="m20 20-3.8-3.8"></path>
+            </svg>
+          </div>
+
+          <div>
+            <p class="eyebrow">Hızlı Arama</p>
+            <h2 id="searchTitle">Cihaz Ara</h2>
+
+            <p class="panel-note">
+              Google Sheets kayıtlarında tam form numarası eşleşmesi aranır.
+            </p>
+          </div>
         </div>
-        <form class="search-form" id="searchForm">
-          <label for="formNoInput">Form No</label>
+
+        <form
+          class="search-form"
+          id="searchForm"
+          autocomplete="off"
+        >
+          <label for="formNoInput">
+            Form Numarası
+          </label>
+
           <div class="search-row">
-            <input id="formNoInput" autocomplete="off" inputmode="text" placeholder="Örn: 12345" required>
-            <button class="primary-button" type="submit" id="searchButton">
+            <div class="query-input-wrap">
+              <span class="query-input-icon" aria-hidden="true">#</span>
+
+              <input
+                id="formNoInput"
+                name="formNo"
+                type="text"
+                inputmode="numeric"
+                enterkeyhint="search"
+                placeholder="Örn. 12345"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+                aria-describedby="formNoHelp"
+                required
+              >
+            </div>
+
+            <button
+              class="primary-button query-search-button"
+              type="submit"
+              id="searchButton"
+            >
+              <span class="button-icon" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="7"></circle>
+                  <path d="m20 20-3.8-3.8"></path>
+                </svg>
+              </span>
+
               <span class="button-text">Ara</span>
             </button>
           </div>
+
+          <small id="formNoHelp" class="field-help">
+            Form numarasını eksiksiz girin ve Enter tuşuna basın.
+          </small>
         </form>
       </section>
 
-      <section class="results-section">
+      <section
+        class="results-section query-results-section"
+        aria-labelledby="resultsTitle"
+      >
         <div class="results-heading">
           <div>
             <p class="eyebrow">Arama Sonucu</p>
-            <h2>Kayıtlar</h2>
+            <h2 id="resultsTitle">Cihaz Kayıtları</h2>
           </div>
-          <span class="result-count" id="resultCount">0 kayıt</span>
+
+          <span
+            class="result-count"
+            id="resultCount"
+            aria-live="polite"
+          >
+            0 kayıt
+          </span>
         </div>
-        <div class="result-list" id="resultList"></div>
-        <div class="empty-state" id="emptyState">
-          <strong>Henüz arama yapılmadı.</strong>
-          <span>Form no yazıp Ara butonuna basın.</span>
+
+        <div
+          class="result-list"
+          id="resultList"
+          aria-live="polite"
+        ></div>
+
+        <div class="empty-state query-empty-state" id="emptyState">
+          <div class="empty-state-icon" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              width="34"
+              height="34"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <path d="M14 2v6h6"></path>
+              <path d="M8 13h8"></path>
+              <path d="M8 17h5"></path>
+            </svg>
+          </div>
+
+          <strong>Henüz arama yapılmadı</strong>
+
+          <span>
+            Form numarasını yazıp Ara butonuna basın.
+          </span>
         </div>
       </section>
+
+      <footer class="query-footer">
+        <p>
+          Bu panel yalnızca kayıtları görüntüler; Google Sheets verilerini değiştirmez.
+        </p>
+      </footer>
     </main>
 
-    <div class="toast" id="toast" role="status" hidden></div>
-    <script src="/pwa.js"></script>
-    <script src="/app.js"></script>
+    <div
+      class="toast"
+      id="toast"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      hidden
+    ></div>
+
+    <noscript>
+      <div class="noscript-warning">
+        Bu uygulamanın çalışması için JavaScript etkin olmalıdır.
+      </div>
+    </noscript>
+
+    <script src="/pwa.js" defer></script>
+    <script src="/app.js" defer></script>
   </body>
 </html>
