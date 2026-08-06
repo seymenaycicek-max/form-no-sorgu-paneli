@@ -2528,3 +2528,48 @@ kbd {
     min-height: 53px;
   }
 }
+
+/* =========================================================
+   DURUM RENKLERİ
+   Genel tema açık mavi kalır.
+   Kaldı = kırmızı, Geçti = yeşil.
+   ========================================================= */
+
+.search-page .query-results-section .status-pill.status-waiting,
+.search-page .query-results-section .status-pill.status-failed,
+.search-page .query-results-section .status-pill.status-red,
+.search-page .query-results-section .status-pill.kaldi,
+.search-page .query-results-section .status-pill.failed,
+.search-page .query-results-section [data-status="Kaldı"],
+.search-page .query-results-section [data-status="KALDI"],
+.search-page .query-results-section [data-status="kaldi"] {
+  border: 1px solid rgba(185, 28, 28, 0.18);
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.search-page .query-results-section .status-pill.status-ok,
+.search-page .query-results-section .status-pill.status-passed,
+.search-page .query-results-section .status-pill.status-green,
+.search-page .query-results-section .status-pill.gecti,
+.search-page .query-results-section .status-pill.passed,
+.search-page .query-results-section [data-status="Geçti"],
+.search-page .query-results-section [data-status="GEÇTİ"],
+.search-page .query-results-section [data-status="gecti"] {
+  border: 1px solid rgba(21, 128, 61, 0.18);
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* Kartın durumuna göre sol renk şeridi */
+.search-page .query-results-section .result-card:has(.status-waiting),
+.search-page .query-results-section .result-card:has(.status-failed),
+.search-page .query-results-section .result-card:has(.kaldi) {
+  border-left: 5px solid #ef4444;
+}
+
+.search-page .query-results-section .result-card:has(.status-ok),
+.search-page .query-results-section .result-card:has(.status-passed),
+.search-page .query-results-section .result-card:has(.gecti) {
+  border-left: 5px solid #22c55e;
+}
