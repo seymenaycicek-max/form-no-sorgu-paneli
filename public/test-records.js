@@ -5,7 +5,7 @@ loadRecords();
 
 async function loadRecords() {
   try {
-    const response = await fetch('/api/test-records?limit=200');
+    const response = await fetch('/api/test-records?limit=300');
     const data = await response.json();
 
     if (!response.ok) {
@@ -27,7 +27,7 @@ function renderRecords(records) {
     return;
   }
 
-  statusEl.textContent = `${records.length} kayıt listeleniyor.`;
+  statusEl.textContent = `${records.length} sipariş kodu listeleniyor.`;
   statusEl.dataset.type = 'ok';
 
   listEl.innerHTML = records
@@ -36,12 +36,15 @@ function renderRecords(records) {
         .filter((item) => item.result === 'red')
         .map((item) => item.name);
 
+      const code = formatCode(record.note);
+
       return `
         <article class="record-item">
           <div class="record-main">
             <div>
-              <strong>${escapeHtml(record.model || 'Model yok')}</strong>
-              <span>${escapeHtml(formatGb(record.gb))}</span>
+              <small>Sipariş Kodu</small>
+              <strong class="record-code">${escapeHtml(code)}</strong>
+              <span>${escapeHtml(formatDevice(record))}</span>
             </div>
             <mark class="${record.finalStatus === 'red' ? 'record-red' : 'record-ok'}">
               ${record.finalStatus === 'red' ? 'RED' : 'OK'}
@@ -73,7 +76,7 @@ function renderRecords(records) {
           </div>
 
           <details class="record-details">
-            <summary>Tüm testleri göster</summary>
+            <summary>${escapeHtml(code)} test detaylarını göster</summary>
             <div class="record-tests">
               ${record.items.map(renderTestItem).join('')}
             </div>
@@ -95,6 +98,16 @@ function renderTestItem(item) {
       <strong>${text}</strong>
     </div>
   `;
+}
+
+function formatCode(value) {
+  const text = String(value || '').trim();
+  return text || 'Kod yazılmadı';
+}
+
+function formatDevice(record) {
+  const model = String(record.model || '').trim() || 'Model yok';
+  return `${model} / ${formatGb(record.gb)}`;
 }
 
 function formatGb(value) {

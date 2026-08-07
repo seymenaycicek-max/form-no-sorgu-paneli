@@ -213,6 +213,23 @@
               </div>
             </label>
 
+            <label
+              class="test-field test-code-field"
+              for="testNote"
+            >
+              <span>Sipariş Kodu</span>
+
+              <input
+                id="testNote"
+                name="testNote"
+                type="text"
+                placeholder="Örn. MED-12345"
+                autocomplete="off"
+                autocapitalize="characters"
+                spellcheck="false"
+              >
+            </label>
+
             <div
               class="test-summary ok-summary"
               aria-label="Toplam başarılı test"
@@ -310,13 +327,6 @@
             test.js bu alanı aradığı için gizli olarak tutuluyor.
             Ekranda görünmez.
           -->
-          <textarea
-            id="testNote"
-            name="testNote"
-            hidden
-            aria-hidden="true"
-            tabindex="-1"
-          ></textarea>
         </form>
       </section>
 
