@@ -1978,7 +1978,7 @@ kbd {
 }
 
 .test-top-grid {
-  grid-template-columns: minmax(155px, 1fr) minmax(200px, 1.4fr) minmax(110px, 0.75fr) 92px 92px 106px;
+  grid-template-columns: minmax(130px, 0.8fr) minmax(180px, 1.1fr) minmax(100px, 0.65fr) minmax(150px, 1fr) minmax(190px, 1.2fr) 82px 82px 98px;
   border-bottom-color: var(--test-line);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
@@ -2030,6 +2030,33 @@ kbd {
 
 .test-top-grid input[type="date"] {
   color-scheme: light;
+}
+
+.test-top-grid textarea {
+  width: 100%;
+  min-height: 42px;
+  resize: vertical;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 0;
+  color: var(--test-ink);
+  background: transparent;
+  font-size: 15px;
+  font-weight: 800;
+  outline: none;
+}
+
+.test-top-grid textarea:hover {
+  border-bottom-color: #cbd5e1;
+}
+
+.test-top-grid textarea:focus {
+  border-bottom-color: var(--test-primary);
+}
+
+.hidden-old-test-note {
+  display: none !important;
 }
 
 .input-suffix {

@@ -230,6 +230,22 @@
               >
             </label>
 
+            <label
+              class="test-field test-note-field"
+              for="testNote"
+            >
+              <span>Not</span>
+
+              <textarea
+                id="testNote"
+                name="testNote"
+                rows="2"
+                placeholder="Kısa not yaz..."
+                autocomplete="off"
+                spellcheck="false"
+              ></textarea>
+            </label>
+
             <div
               class="test-summary ok-summary"
               aria-label="Toplam başarılı test"
@@ -333,14 +349,14 @@
           ></div>
 
           <label
-            class="test-note visible-test-note"
+            class="test-note hidden-old-test-note"
             for="testNote"
           >
             <span>Notlar</span>
 
             <textarea
-              id="testNote"
-              name="testNote"
+              id="oldTestNote"
+              name="oldTestNote"
               rows="4"
               placeholder="Cihazla ilgili ek not yazın..."
               autocomplete="off"
