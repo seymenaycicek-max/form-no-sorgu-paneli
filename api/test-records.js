@@ -1,10 +1,16 @@
 import fs from 'fs/promises';
+import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const dataDir = path.join(__dirname, '..', 'data');
+const dataDir = process.env.TEST_RECORDS_DIR ||
+  (
+    process.env.VERCEL
+      ? path.join(os.tmpdir(), 'hb-kalite-kontrol')
+      : path.join(__dirname, '..', 'data')
+  );
 const dbPath = path.join(dataDir, 'test-records.json');
 const maxRecords = 5000;
 
@@ -50,7 +56,7 @@ export default async function handler(req, res) {
 }
 
 async function enqueueWrite(record) {
-  writeQueue = writeQueue.then(async () => {
+  const operation = writeQueue.catch(() => {}).then(async () => {
     const records = await readRecords();
     const savedRecord = {
       id: createId(),
@@ -76,7 +82,9 @@ async function enqueueWrite(record) {
     return savedRecord;
   });
 
-  return writeQueue;
+  writeQueue = operation.catch(() => {});
+
+  return operation;
 }
 
 async function readRecords() {
