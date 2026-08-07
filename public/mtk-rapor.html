@@ -13,7 +13,7 @@
           <p class="eyebrow">MTK canlı rapor</p>
           <h1>Teknisyen Üretim Tablosu</h1>
           <p class="report-subtitle">
-            Onarım bitiş tarihi seçilen gün olan ve operasyonel bilgilerde teste çekilen cihazlar listelenir.
+            Onarım bitiş tarihi seçilen gün olan cihazlar teknisyen bazında listelenir.
           </p>
         </div>
 
@@ -26,44 +26,65 @@
         </form>
       </section>
 
-      <section class="report-summary" aria-live="polite">
-        <div class="summary-card">
-          <span>Onarıldı</span>
-          <strong id="totalRepaired">0</strong>
-        </div>
-        <div class="summary-card renewal">
-          <span>Yenileme</span>
-          <strong id="totalRenewal">0</strong>
-        </div>
-        <div class="summary-card total">
-          <span>Genel Toplam</span>
-          <strong id="totalAll">0</strong>
-        </div>
-      </section>
+      <div class="report-layout">
+        <aside class="report-settings" aria-label="Renk ayarları">
+          <h2>Renk Ayarları</h2>
+          <label>
+            Yeşil başlangıç
+            <input id="greenMin" type="number" min="0" step="1" />
+          </label>
+          <label>
+            Beyaz başlangıç
+            <input id="whiteMin" type="number" min="0" step="1" />
+          </label>
+          <label>
+            Kırmızı üst sınır
+            <input id="redMax" type="number" min="0" step="1" />
+          </label>
+          <button id="resetColors" type="button">Sıfırla</button>
+        </aside>
 
-      <section class="report-table-wrap">
-        <div id="statusBox" class="report-status">Rapor yükleniyor...</div>
+        <div class="report-main">
+          <section class="report-summary" aria-live="polite">
+            <div class="summary-card">
+              <span>Onarıldı</span>
+              <strong id="totalRepaired">0</strong>
+            </div>
+            <div class="summary-card renewal">
+              <span>Yenileme</span>
+              <strong id="totalRenewal">0</strong>
+            </div>
+            <div class="summary-card total">
+              <span>Genel Toplam</span>
+              <strong id="totalAll">0</strong>
+            </div>
+          </section>
 
-        <table class="mtk-report-table" aria-label="MTK teknisyen raporu">
-          <thead>
-            <tr>
-              <th>Teknisyen</th>
-              <th>Onarıldı</th>
-              <th>Yenileme</th>
-              <th>Toplam</th>
-            </tr>
-          </thead>
-          <tbody id="reportRows"></tbody>
-          <tfoot>
-            <tr>
-              <th>Genel Toplam</th>
-              <td id="footerRepaired">0</td>
-              <td id="footerRenewal">0</td>
-              <td id="footerAll">0</td>
-            </tr>
-          </tfoot>
-        </table>
-      </section>
+          <section class="report-table-wrap">
+            <div id="statusBox" class="report-status">Rapor yükleniyor...</div>
+
+            <table class="mtk-report-table" aria-label="MTK teknisyen raporu">
+              <thead>
+                <tr>
+                  <th>Teknisyen</th>
+                  <th>Onarıldı</th>
+                  <th>Yenileme</th>
+                  <th>Toplam</th>
+                </tr>
+              </thead>
+              <tbody id="reportRows"></tbody>
+              <tfoot>
+                <tr>
+                  <th>Genel Toplam</th>
+                  <td id="footerRepaired">0</td>
+                  <td id="footerRenewal">0</td>
+                  <td id="footerAll">0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </section>
+        </div>
+      </div>
     </main>
 
     <script src="/mtk-rapor.js" type="module"></script>
