@@ -18,12 +18,16 @@ echo Bu bilgisayardan:
 echo   http://localhost:%PORT%/mtk-rapor
 echo   http://localhost:%PORT%/test
 echo   http://localhost:%PORT%/test-kayitlari
+echo   http://localhost:%PORT%/teknisyen-test
+echo   http://localhost:%PORT%/teknisyen-test-kayitlari
 echo.
 echo Ayni Wi-Fi / agdaki telefonlardan:
 for /f "tokens=*" %%i in ('powershell -NoProfile -Command "Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike '127.*' -and $_.PrefixOrigin -ne 'WellKnown' } | Select-Object -ExpandProperty IPAddress"') do (
   echo   http://%%i:%PORT%/mtk-rapor
   echo   http://%%i:%PORT%/test
   echo   http://%%i:%PORT%/test-kayitlari
+  echo   http://%%i:%PORT%/teknisyen-test
+  echo   http://%%i:%PORT%/teknisyen-test-kayitlari
 )
 echo.
 echo Pencere acik kaldigi surece site calisir. Kapatirsan site durur.

@@ -8,6 +8,7 @@ import searchHandler from './api/search.js';
 import sheetsHandler from './api/sheets.js';
 import mtkReportHandler from './api/mtk-report.js';
 import testRecordsHandler from './api/test-records.js';
+import technicianTestRecordsHandler from './api/technician-test-records.js';
 
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '0.0.0.0';
@@ -39,6 +40,12 @@ const server = http.createServer(async (req, res) => {
       req.query = Object.fromEntries(url.searchParams.entries());
       req.body = req.method === 'POST' ? await readJsonBody(req) : {};
       return testRecordsHandler(req, createJsonResponse(res));
+    }
+
+    if (url.pathname === '/api/technician-test-records') {
+      req.query = Object.fromEntries(url.searchParams.entries());
+      req.body = req.method === 'POST' ? await readJsonBody(req) : {};
+      return technicianTestRecordsHandler(req, createJsonResponse(res));
     }
 
     return serveStatic(url.pathname, res);
@@ -101,6 +108,8 @@ function serveStatic(urlPath, res) {
     '/settings': '/settings.html',
     '/test': '/test.html',
     '/test-kayitlari': '/test-records.html',
+    '/teknisyen-test': '/technician-test.html',
+    '/teknisyen-test-kayitlari': '/technician-test-records.html',
     '/mtk-rapor': '/mtk-rapor.html',
     '/mtk-rapor/': '/mtk-rapor.html'
   };

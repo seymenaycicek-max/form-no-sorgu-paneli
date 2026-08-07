@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hb-kalite-kontrol-v7';
+const CACHE_NAME = 'hb-kalite-kontrol-v8';
 const APP_SHELL = [
   '/',
   '/test',
@@ -7,6 +7,12 @@ const APP_SHELL = [
   '/test-kayitlari',
   '/test-records.html',
   '/test-records.js',
+  '/teknisyen-test',
+  '/technician-test.html',
+  '/technician-test.js',
+  '/teknisyen-test-kayitlari',
+  '/technician-test-records.html',
+  '/technician-test-records.js',
   '/styles.css',
   '/manifest.webmanifest',
   '/icons/icon-192.png',
