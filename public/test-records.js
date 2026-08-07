@@ -34,7 +34,7 @@ function renderRecords(records) {
     .map((record) => {
       const failedItems = record.items
         .filter((item) => item.result === 'red')
-        .map((item) => item.name);
+        .map((item) => formatItemLabel(item));
 
       const code = formatCode(record.orderCode || record.note);
 
@@ -94,15 +94,38 @@ function renderRecords(records) {
 
 function renderTestItem(item) {
   const isRed = item.result === 'red';
-  const text = item.result === 'red' ? 'Çarpı' : 'Tik';
-  const extra = item.extra ? ` (${escapeHtml(item.extra)})` : '';
+  const symbol = isRed ? '✕' : '✓';
+  const label = formatItemLabel(item);
 
   return `
     <div class="${isRed ? 'record-test red' : 'record-test ok'}">
-      <span>${escapeHtml(item.name)}${extra}</span>
-      <strong>${text}</strong>
+      <span>${escapeHtml(label)}</span>
+      <strong class="record-symbol" aria-label="${isRed ? 'Çarpı' : 'Tik'}">${symbol}</strong>
     </div>
   `;
+}
+
+function formatItemLabel(item) {
+  const name = String(item.name || '').trim();
+  const extra = String(item.extra || '').trim();
+
+  if (!extra) {
+    return name;
+  }
+
+  if (normalizeText(name).includes('PIL SAGLIGI')) {
+    const percentValue = extra.replace(/%+$/g, '').trim();
+    return `${name}: ${percentValue}%`;
+  }
+
+  return `${name}: ${extra}`;
+}
+
+function normalizeText(value) {
+  return String(value || '')
+    .toLocaleUpperCase('tr-TR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
 function formatCode(value) {

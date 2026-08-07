@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hb-kalite-kontrol-v6';
+const CACHE_NAME = 'hb-kalite-kontrol-v7';
 const APP_SHELL = [
   '/',
   '/test',

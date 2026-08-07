@@ -261,6 +261,30 @@
   background: #fff1f2;
 }
 
+.record-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.record-test.ok .record-symbol {
+  color: #15803d;
+  box-shadow: inset 0 0 0 2px #86efac;
+}
+
+.record-test.red .record-symbol {
+  color: #b91c1c;
+  box-shadow: inset 0 0 0 2px #fecaca;
+}
+
 .test-code-field input {
   text-transform: uppercase;
 }
