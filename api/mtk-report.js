@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     request.input('reportDate', sql.Date, dateText);
 
     const result = await request.query(`
-WITH TestMoves AS (
+WITH RelevantMoves AS (
   SELECT
     k.Kayitno,
     k.takipno,
@@ -28,123 +28,69 @@ WITH TestMoves AS (
     k.Onarbittar,
     h.ophartarih,
     h.opharsaat,
+    h.opharno,
     h.opharack,
     NULLIF(LTRIM(RTRIM(ISNULL(h.opharuser, ''))), '') AS RaporTeknisyen,
     UPPER(
       REPLACE(
         REPLACE(
-          REPLACE(ISNULL(k.onarbilgi, ''), N'İ', N'I'),
+          REPLACE(ISNULL(h.opharuser, ''), N'İ', N'I'),
           N'ı',
           N'I'
         ),
         N'i',
         N'I'
       )
-    ) AS NormalizedRepairText,
-    UPPER(
-      REPLACE(
-        REPLACE(
-          REPLACE(
-            REPLACE(
-              REPLACE(
-                REPLACE(
-                  REPLACE(
-                    REPLACE(
-                      REPLACE(
-                        REPLACE(ISNULL(h.opharuser, ''), N'İ', N'I'),
-                        N'ı',
-                        N'I'
-                      ),
-                      N'i',
-                      N'I'
-                    ),
-                    N'Ş',
-                    N'S'
-                  ),
-                  N'ş',
-                  N'S'
-                ),
-                N'Ç',
-                N'C'
-              ),
-              N'ç',
-              N'C'
-            ),
-            N'Ğ',
-            N'G'
-          ),
-          N'ğ',
-          N'G'
-        ),
-        N'Ü',
-        N'U'
-      )
-    ) AS NormalizedUser
+    ) AS NormalizedUser,
+    CASE
+      WHEN k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%YENILEME%'
+        OR k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%YENİLEME%'
+      THEN 'yenileme'
+      WHEN k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%ONARILDI%'
+        OR k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%ONARILDI%'
+        OR k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%ARIZA GORULMEDI%'
+        OR k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%ARIZA GÖRÜLMEDİ%'
+        OR k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%IADE ICIN UYGUN%'
+        OR k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%İADE İÇİN UYGUN%'
+      THEN 'onarildi'
+      ELSE ''
+    END AS ResultType,
+    ROW_NUMBER() OVER (
+      PARTITION BY k.Kayitno
+      ORDER BY h.ophartarih ASC, h.opharsaat ASC, h.opharno ASC
+    ) AS DeviceRank
   FROM oprhar h
   INNER JOIN Kayit k ON k.Kayitno = h.opharkayno
   WHERE CAST(h.ophartarih AS date) = @reportDate
     AND CAST(k.Onarbittar AS date) = @reportDate
     AND (
-      UPPER(
-        REPLACE(
-          REPLACE(
-            REPLACE(ISNULL(h.opharack, ''), N'İ', N'I'),
-            N'ı',
-            N'I'
-          ),
-          N'i',
-          N'I'
-        )
-      ) LIKE N'%TEST%'
-      OR UPPER(
-        REPLACE(
-          REPLACE(
-            REPLACE(ISNULL(h.opharack, ''), N'İ', N'I'),
-            N'ı',
-            N'I'
-          ),
-          N'i',
-          N'I'
-        )
-      ) LIKE N'%AGIR ARIZA%'
+      h.opharack COLLATE Turkish_CI_AI LIKE N'%TEST%'
+      OR h.opharack COLLATE Turkish_CI_AI LIKE N'%AGIR ARIZA%'
+      OR h.opharack COLLATE Turkish_CI_AI LIKE N'%AĞIR ARIZA%'
+      OR h.opharack COLLATE Turkish_CI_AI LIKE N'%KALITE KONTROL KALDI%'
+      OR h.opharack COLLATE Turkish_CI_AI LIKE N'%KALİTE KONTROL KALDI%'
     )
 )
 SELECT
   RaporTeknisyen AS teknisyen,
-  SUM(
-    CASE
-      WHEN NormalizedRepairText LIKE N'%ONARILDI%'
-       AND NormalizedRepairText NOT LIKE N'%YENILEME%'
-      THEN 1
-      ELSE 0
-    END
-  ) AS onarildi,
-  SUM(
-    CASE
-      WHEN NormalizedRepairText LIKE N'%YENILEME%'
-      THEN 1
-      ELSE 0
-    END
-  ) AS yenileme
-FROM TestMoves
-WHERE RaporTeknisyen IS NOT NULL
+  SUM(CASE WHEN ResultType = 'onarildi' THEN 1 ELSE 0 END) AS onarildi,
+  SUM(CASE WHEN ResultType = 'yenileme' THEN 1 ELSE 0 END) AS yenileme
+FROM RelevantMoves
+WHERE DeviceRank = 1
+  AND ResultType IN ('onarildi', 'yenileme')
+  AND RaporTeknisyen IS NOT NULL
   AND NormalizedUser <> N'MTKSOFT'
   AND NormalizedUser NOT IN (
     N'UGURCAN SARGIN',
     N'AHMET TASCI',
-    N'IYAD SHUMAIS'
-  )
-  AND (
-    NormalizedRepairText LIKE N'%ONARILDI%'
-    OR NormalizedRepairText LIKE N'%YENILEME%'
+    N'IYAD SHUMAIS',
+    N'AAKAYIT KAPATMA',
+    N'AA KAYIT KAPATMA'
   )
 GROUP BY RaporTeknisyen
 ORDER BY
-  (
-    SUM(CASE WHEN NormalizedRepairText LIKE N'%ONARILDI%' AND NormalizedRepairText NOT LIKE N'%YENILEME%' THEN 1 ELSE 0 END)
-    + SUM(CASE WHEN NormalizedRepairText LIKE N'%YENILEME%' THEN 1 ELSE 0 END)
-  ) DESC,
-  SUM(CASE WHEN NormalizedRepairText LIKE N'%ONARILDI%' THEN 1 ELSE 0 END) DESC,
+  SUM(CASE WHEN ResultType IN ('onarildi', 'yenileme') THEN 1 ELSE 0 END) DESC,
+  SUM(CASE WHEN ResultType = 'onarildi' THEN 1 ELSE 0 END) DESC,
   RaporTeknisyen ASC;
     `);
 
@@ -202,7 +148,8 @@ function isBlockedTechnician(name) {
     'AHMETTASCI',
     'IYADSHUMAIS',
     'UGURCANSARGIN',
-    'UGURSARGIN'
+    'UGURSARGIN',
+    'AAKAYITKAPATMA'
   ].includes(normalizeName(name));
 }
 
