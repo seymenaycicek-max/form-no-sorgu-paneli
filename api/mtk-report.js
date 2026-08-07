@@ -95,29 +95,6 @@ WITH TestMoves AS (
         N'I'
       )
     ) LIKE N'%TEST%'
-    AND NOT EXISTS (
-      SELECT 1
-      FROM oprhar failMove
-      WHERE failMove.opharkayno = k.Kayitno
-        AND (
-          failMove.ophartarih > h.ophartarih
-          OR (
-            failMove.ophartarih = h.ophartarih
-            AND ISNULL(failMove.opharsaat, '') >= ISNULL(h.opharsaat, '')
-          )
-        )
-        AND UPPER(
-          REPLACE(
-            REPLACE(
-              REPLACE(ISNULL(failMove.opharack, ''), N'İ', N'I'),
-              N'ı',
-              N'I'
-            ),
-            N'i',
-            N'I'
-          )
-        ) LIKE N'%KALDI%'
-    )
 )
 SELECT
   RaporTeknisyen AS teknisyen,
@@ -158,17 +135,19 @@ ORDER BY
   RaporTeknisyen ASC;
     `);
 
-    const rows = result.recordset.map((row) => {
-      const onarildi = Number(row.onarildi || 0);
-      const yenileme = Number(row.yenileme || 0);
+    const rows = result.recordset
+      .filter((row) => !isBlockedTechnician(row.teknisyen))
+      .map((row) => {
+        const onarildi = Number(row.onarildi || 0);
+        const yenileme = Number(row.yenileme || 0);
 
-      return {
-        teknisyen: row.teknisyen,
-        onarildi,
-        yenileme,
-        toplam: onarildi + yenileme
-      };
-    });
+        return {
+          teknisyen: row.teknisyen,
+          onarildi,
+          yenileme,
+          toplam: onarildi + yenileme
+        };
+      });
 
     return res.status(200).json({
       date: dateText,
@@ -203,4 +182,21 @@ function getDateText(value) {
   }
 
   return new Date().toISOString().slice(0, 10);
+}
+
+function isBlockedTechnician(name) {
+  return [
+    'AHMETTASCI',
+    'IYADSHUMAIS',
+    'UGURCANSARGIN',
+    'UGURSARGIN'
+  ].includes(normalizeName(name));
+}
+
+function normalizeName(value) {
+  return String(value || '')
+    .toLocaleUpperCase('tr-TR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Z0-9]/g, '');
 }
