@@ -77,10 +77,12 @@ const elements = {
   progressContainer: document.querySelector('.test-progress-bar'),
   activeText: document.getElementById('activeText'),
   clearButton: document.getElementById('clearButton'),
+  sendButton: document.getElementById('sendButton'),
   toast: document.getElementById('toast'),
   testDate: document.getElementById('testDate'),
   testModel: document.getElementById('testModel'),
   testGb: document.getElementById('testGb'),
+  testOrderCode: document.getElementById('testOrderCode'),
   testNote: document.getElementById('testNote')
 };
 
@@ -93,6 +95,7 @@ const requiredElements = [
   'progressBar',
   'activeText',
   'clearButton',
+  'sendButton',
   'toast',
   'testDate',
   'testModel',
@@ -119,6 +122,11 @@ function startTestApp() {
   elements.clearButton.addEventListener(
     'click',
     clearPaper
+  );
+
+  elements.sendButton.addEventListener(
+    'click',
+    submitPaper
   );
 
   document.addEventListener(
@@ -1132,6 +1140,10 @@ function clearPaper() {
   elements.testModel.value = '';
   elements.testGb.value = '';
 
+  if (elements.testOrderCode) {
+    elements.testOrderCode.value = '';
+  }
+
   if (elements.testNote) {
     elements.testNote.value = '';
   }
@@ -1192,11 +1204,25 @@ async function saveAndClearPaper() {
   }
 }
 
+function submitPaper() {
+  if (!isComplete()) {
+    showToast(
+      'Tüm testler, kozmetik sınıfı ve pil sağlığı doldurulmalıdır.',
+      true
+    );
+
+    return;
+  }
+
+  saveAndClearPaper();
+}
+
 function createTestRecordPayload() {
   return {
     date: elements.testDate.value,
     model: elements.testModel.value,
     gb: elements.testGb.value,
+    orderCode: elements.testOrderCode ? elements.testOrderCode.value : '',
     note: elements.testNote ? elements.testNote.value : '',
     items: TEST_ITEMS.map((name, index) => {
       let extra = '';

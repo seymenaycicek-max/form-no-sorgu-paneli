@@ -215,13 +215,13 @@
 
             <label
               class="test-field test-code-field"
-              for="testNote"
+              for="testOrderCode"
             >
               <span>Sipariş Kodu</span>
 
               <input
-                id="testNote"
-                name="testNote"
+                id="testOrderCode"
+                name="testOrderCode"
                 type="text"
                 placeholder="Örn. MED-12345"
                 autocomplete="off"
@@ -302,6 +302,15 @@
 
               Temizle
             </button>
+
+            <button
+              class="primary-button send-test-button"
+              type="button"
+              id="sendButton"
+              aria-controls="testTable"
+            >
+              Gönder
+            </button>
           </div>
 
           <div
@@ -322,6 +331,22 @@
             aria-label="Cihaz testleri"
             tabindex="0"
           ></div>
+
+          <label
+            class="test-note visible-test-note"
+            for="testNote"
+          >
+            <span>Notlar</span>
+
+            <textarea
+              id="testNote"
+              name="testNote"
+              rows="4"
+              placeholder="Cihazla ilgili ek not yazın..."
+              autocomplete="off"
+              spellcheck="false"
+            ></textarea>
+          </label>
 
           <!--
             test.js bu alanı aradığı için gizli olarak tutuluyor.

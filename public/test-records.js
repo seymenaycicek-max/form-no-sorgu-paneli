@@ -36,7 +36,7 @@ function renderRecords(records) {
         .filter((item) => item.result === 'red')
         .map((item) => item.name);
 
-      const code = formatCode(record.note);
+      const code = formatCode(record.orderCode || record.note);
 
       return `
         <article class="record-item">
@@ -75,6 +75,11 @@ function renderRecords(records) {
             <p>${failedItems.length ? escapeHtml(failedItems.join(', ')) : 'Yok'}</p>
           </div>
 
+          <div class="record-note-view">
+            <span>Notlar</span>
+            <p>${escapeHtml(formatNote(record))}</p>
+          </div>
+
           <details class="record-details">
             <summary>${escapeHtml(code)} test detaylarını göster</summary>
             <div class="record-tests">
@@ -103,6 +108,14 @@ function renderTestItem(item) {
 function formatCode(value) {
   const text = String(value || '').trim();
   return text || 'Kod yazılmadı';
+}
+
+function formatNote(record) {
+  if (!record.orderCode && record.note) {
+    return 'Not yazılmadı';
+  }
+
+  return String(record.note || '').trim() || 'Not yazılmadı';
 }
 
 function formatDevice(record) {

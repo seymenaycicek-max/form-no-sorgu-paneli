@@ -205,6 +205,25 @@
   font-weight: 800;
 }
 
+.record-note-view {
+  border-top: 1px solid #eef2f7;
+  padding: 12px 14px;
+}
+
+.record-note-view span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.record-note-view p {
+  margin: 5px 0 0;
+  color: #334155;
+  font-weight: 800;
+  white-space: pre-wrap;
+}
+
 .record-details {
   border-top: 1px solid #eef2f7;
   padding: 0 14px 14px;
@@ -244,6 +263,19 @@
 
 .test-code-field input {
   text-transform: uppercase;
+}
+
+.test-progress .send-test-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 128px;
+  min-height: 42px;
+  padding: 0 18px;
+}
+
+.visible-test-note {
+  display: grid;
 }
 
 @media (max-width: 760px) {

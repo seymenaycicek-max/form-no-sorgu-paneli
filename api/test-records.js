@@ -112,6 +112,7 @@ function normalizeRecord(body = {}) {
     date: cleanText(body.date),
     model: cleanText(body.model),
     gb: cleanText(body.gb),
+    orderCode: cleanText(body.orderCode),
     note: cleanText(body.note),
     finalStatus: redCount > 0 ? 'red' : 'ok',
     okCount,
