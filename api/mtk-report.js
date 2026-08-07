@@ -84,17 +84,30 @@ WITH TestMoves AS (
   INNER JOIN Kayit k ON k.Kayitno = h.opharkayno
   WHERE CAST(h.ophartarih AS date) = @reportDate
     AND CAST(k.Onarbittar AS date) = @reportDate
-    AND UPPER(
-      REPLACE(
+    AND (
+      UPPER(
         REPLACE(
-          REPLACE(ISNULL(h.opharack, ''), N'İ', N'I'),
-          N'ı',
+          REPLACE(
+            REPLACE(ISNULL(h.opharack, ''), N'İ', N'I'),
+            N'ı',
+            N'I'
+          ),
+          N'i',
           N'I'
-        ),
-        N'i',
-        N'I'
-      )
-    ) LIKE N'%TEST%'
+        )
+      ) LIKE N'%TEST%'
+      OR UPPER(
+        REPLACE(
+          REPLACE(
+            REPLACE(ISNULL(h.opharack, ''), N'İ', N'I'),
+            N'ı',
+            N'I'
+          ),
+          N'i',
+          N'I'
+        )
+      ) LIKE N'%AGIR ARIZA%'
+    )
 )
 SELECT
   RaporTeknisyen AS teknisyen,
