@@ -25,7 +25,6 @@ WITH RelevantMoves AS (
     k.takipno,
     k.Model,
     k.onarbilgi,
-    k.Yapislem,
     k.Onarbittar,
     h.ophartarih,
     h.opharsaat,
@@ -52,7 +51,6 @@ WITH RelevantMoves AS (
     ) AS NormalizedUser,
     CASE
       WHEN k.onarbilgi COLLATE Latin1_General_CI_AI LIKE N'%YENILEME%'
-        OR k.Yapislem COLLATE Latin1_General_CI_AI LIKE N'%DEGISIM LISTEYE EKLENDI%'
       THEN 'yenileme'
       WHEN k.onarbilgi COLLATE Latin1_General_CI_AI LIKE N'%ONARILDI%'
         OR k.onarbilgi COLLATE Latin1_General_CI_AI LIKE N'%ARIZA GORULMEDI%'
