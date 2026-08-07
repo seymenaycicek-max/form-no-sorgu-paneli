@@ -231,14 +231,14 @@
             </label>
 
             <label
-              class="test-field test-note-field"
-              for="testNote"
+              class="test-field test-note-field hidden-old-test-note"
+              for="oldTopTestNote"
             >
               <span>Not</span>
 
               <textarea
-                id="testNote"
-                name="testNote"
+                id="oldTopTestNote"
+                name="oldTopTestNote"
                 rows="2"
                 placeholder="Kısa not yaz..."
                 autocomplete="off"
@@ -320,9 +320,9 @@
             </button>
 
             <button
-              class="primary-button send-test-button"
+              class="primary-button send-test-button hidden-old-test-note"
               type="button"
-              id="sendButton"
+              id="oldSendButton"
               aria-controls="testTable"
             >
               Gönder
@@ -349,19 +349,28 @@
           ></div>
 
           <label
-            class="test-note hidden-old-test-note"
+            class="test-note visible-test-note bottom-note-area"
             for="testNote"
           >
             <span>Notlar</span>
 
             <textarea
-              id="oldTestNote"
-              name="oldTestNote"
-              rows="4"
+              id="testNote"
+              name="testNote"
+              rows="6"
               placeholder="Cihazla ilgili ek not yazın..."
               autocomplete="off"
               spellcheck="false"
             ></textarea>
+
+            <button
+              class="primary-button send-test-button bottom-send-button"
+              type="button"
+              id="sendButton"
+              aria-controls="testTable"
+            >
+              Gönder
+            </button>
           </label>
 
           <!--

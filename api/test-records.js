@@ -121,7 +121,7 @@ function normalizeRecord(body = {}) {
     model: cleanText(body.model),
     gb: cleanText(body.gb),
     orderCode: cleanText(body.orderCode),
-    note: cleanText(body.note),
+    note: cleanLongText(body.note),
     finalStatus: redCount > 0 ? 'red' : 'ok',
     okCount,
     redCount,
@@ -131,6 +131,10 @@ function normalizeRecord(body = {}) {
 
 function cleanText(value) {
   return String(value || '').trim().slice(0, 500);
+}
+
+function cleanLongText(value) {
+  return String(value || '').trim();
 }
 
 function cleanResult(value) {
