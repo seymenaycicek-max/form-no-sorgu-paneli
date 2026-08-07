@@ -30,7 +30,14 @@ WITH RelevantMoves AS (
     h.opharsaat,
     h.opharno,
     h.opharack,
-    NULLIF(LTRIM(RTRIM(ISNULL(h.opharuser, ''))), '') AS RaporTeknisyen,
+    CASE
+      WHEN h.opharack COLLATE Latin1_General_CI_AI LIKE N'%KALITE KONTROL%'
+      THEN COALESCE(
+        NULLIF(LTRIM(RTRIM(ISNULL(k.Teknisyen, ''))), ''),
+        NULLIF(LTRIM(RTRIM(ISNULL(k.sonislem, ''))), '')
+      )
+      ELSE NULLIF(LTRIM(RTRIM(ISNULL(h.opharuser, ''))), '')
+    END AS RaporTeknisyen,
     UPPER(
       REPLACE(
         REPLACE(
@@ -43,15 +50,11 @@ WITH RelevantMoves AS (
       )
     ) AS NormalizedUser,
     CASE
-      WHEN k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%YENILEME%'
-        OR k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%YENİLEME%'
+      WHEN k.onarbilgi COLLATE Latin1_General_CI_AI LIKE N'%YENILEME%'
       THEN 'yenileme'
-      WHEN k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%ONARILDI%'
-        OR k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%ONARILDI%'
-        OR k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%ARIZA GORULMEDI%'
-        OR k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%ARIZA GÖRÜLMEDİ%'
-        OR k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%IADE ICIN UYGUN%'
-        OR k.onarbilgi COLLATE Turkish_CI_AI LIKE N'%İADE İÇİN UYGUN%'
+      WHEN k.onarbilgi COLLATE Latin1_General_CI_AI LIKE N'%ONARILDI%'
+        OR k.onarbilgi COLLATE Latin1_General_CI_AI LIKE N'%ARIZA GORULMEDI%'
+        OR k.onarbilgi COLLATE Latin1_General_CI_AI LIKE N'%IADE ICIN UYGUN%'
       THEN 'onarildi'
       ELSE ''
     END AS ResultType,
@@ -64,11 +67,10 @@ WITH RelevantMoves AS (
   WHERE CAST(h.ophartarih AS date) = @reportDate
     AND CAST(k.Onarbittar AS date) = @reportDate
     AND (
-      h.opharack COLLATE Turkish_CI_AI LIKE N'%TEST%'
-      OR h.opharack COLLATE Turkish_CI_AI LIKE N'%AGIR ARIZA%'
-      OR h.opharack COLLATE Turkish_CI_AI LIKE N'%AĞIR ARIZA%'
-      OR h.opharack COLLATE Turkish_CI_AI LIKE N'%KALITE KONTROL KALDI%'
-      OR h.opharack COLLATE Turkish_CI_AI LIKE N'%KALİTE KONTROL KALDI%'
+      h.opharack COLLATE Latin1_General_CI_AI LIKE N'%SERVIS DURUMU%TEST%'
+      OR h.opharack COLLATE Latin1_General_CI_AI LIKE N'%SERVIS DURUMU%AGIR ARIZA%'
+      OR h.opharack COLLATE Latin1_General_CI_AI LIKE N'%SERVIS DURUMU%KALITE KONTROL KALDI%'
+      OR h.opharack COLLATE Latin1_General_CI_AI LIKE N'%SERVIS DURUMU%KALITE KONTROL SAGLAM%'
     )
 )
 SELECT
@@ -80,13 +82,6 @@ WHERE DeviceRank = 1
   AND ResultType IN ('onarildi', 'yenileme')
   AND RaporTeknisyen IS NOT NULL
   AND NormalizedUser <> N'MTKSOFT'
-  AND NormalizedUser NOT IN (
-    N'UGURCAN SARGIN',
-    N'AHMET TASCI',
-    N'IYAD SHUMAIS',
-    N'AAKAYIT KAPATMA',
-    N'AA KAYIT KAPATMA'
-  )
 GROUP BY RaporTeknisyen
 ORDER BY
   SUM(CASE WHEN ResultType IN ('onarildi', 'yenileme') THEN 1 ELSE 0 END) DESC,
@@ -125,7 +120,7 @@ ORDER BY
       )
     });
   } catch (error) {
-    console.error('MTK rapor API hatası:', error);
+    console.error('MTK rapor API hatasi:', error);
 
     return res.status(500).json({
       error: getPublicMtkError(error)
