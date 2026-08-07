@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Kayıtları</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body class="records-page">
+    <main class="records-shell">
+      <header class="records-header">
+        <div>
+          <p class="eyebrow">Kalite kontrol</p>
+          <h1>Test Kayıtları</h1>
+          <p>Kaydedilen dijital test kağıtları burada listelenir.</p>
+        </div>
+
+        <a class="records-action" href="/test">Test Ekranı</a>
+      </header>
+
+      <section class="records-card">
+        <div id="recordsStatus" class="records-status">Kayıtlar yükleniyor...</div>
+        <div id="recordsList" class="records-list"></div>
+      </section>
+    </main>
+
+    <script src="/test-records.js" type="module"></script>
+  </body>
+</html>

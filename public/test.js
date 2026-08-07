@@ -63,7 +63,8 @@ const state = {
   results: Array(TEST_ITEMS.length).fill(''),
   batteryHealth: '',
   cosmeticGrade: '',
-  cosmeticMenuOpen: false
+  cosmeticMenuOpen: false,
+  saving: false
 };
 
 const elements = {
@@ -785,7 +786,7 @@ function handleKeyDown(event) {
       return;
     }
 
-    clearPaper();
+    saveAndClearPaper();
   }
 }
 
@@ -1142,6 +1143,79 @@ function clearPaper() {
     'Kağıt temizlendi. Yeni cihaza geçebilirsiniz.',
     false
   );
+}
+
+/* =========================================================
+   TEST KAYDINI VERITABANINA YAZ
+   ========================================================= */
+
+async function saveAndClearPaper() {
+  if (state.saving) {
+    return;
+  }
+
+  state.saving = true;
+
+  showToast(
+    'Test kaydi aliniyor...',
+    false
+  );
+
+  try {
+    const response = await fetch('/api/test-records', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(createTestRecordPayload())
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Test kaydi alinamadi.');
+    }
+
+    clearPaper();
+
+    showToast(
+      'Test kaydedildi. Yeni cihaza gecebilirsiniz.',
+      false
+    );
+  } catch (error) {
+    showToast(
+      error.message || 'Test kaydi alinirken hata olustu.',
+      true
+    );
+  } finally {
+    state.saving = false;
+  }
+}
+
+function createTestRecordPayload() {
+  return {
+    date: elements.testDate.value,
+    model: elements.testModel.value,
+    gb: elements.testGb.value,
+    note: elements.testNote ? elements.testNote.value : '',
+    items: TEST_ITEMS.map((name, index) => {
+      let extra = '';
+
+      if (index === BATTERY_INDEX) {
+        extra = state.batteryHealth;
+      }
+
+      if (index === COSMETIC_INDEX) {
+        extra = state.cosmeticGrade;
+      }
+
+      return {
+        name,
+        result: state.results[index],
+        extra
+      };
+    })
+  };
 }
 
 /* =========================================================
