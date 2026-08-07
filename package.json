@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "migrate:test-records": "node scripts/migrate-test-records-json-to-mysql.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "googleapis": "^140.0.1",
-    "mssql": "^12.7.0"
+    "mssql": "^12.7.0",
+    "mysql2": "^3.23.2"
   },
   "engines": {
     "node": ">=18"

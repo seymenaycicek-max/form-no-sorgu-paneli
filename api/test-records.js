@@ -1,29 +1,14 @@
-import fs from 'fs/promises';
-import os from 'os';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { getTestDbPool } from './_testDb.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const dataDir = process.env.TEST_RECORDS_DIR ||
-  (
-    process.env.VERCEL
-      ? path.join(os.tmpdir(), 'hb-kalite-kontrol')
-      : path.join(__dirname, '..', 'data')
-  );
-const dbPath = path.join(dataDir, 'test-records.json');
 const maxRecords = 5000;
-
-let writeQueue = Promise.resolve();
 
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      const records = await readRecords();
-      const limit = clampLimit(req.query.limit);
+      const records = await readRecords(clampLimit(req.query.limit));
 
       return res.status(200).json({
-        records: records.slice(0, limit)
+        records
       });
     }
 
@@ -36,7 +21,7 @@ export default async function handler(req, res) {
         });
       }
 
-      const savedRecord = await enqueueWrite(record);
+      const savedRecord = await saveRecord(record);
 
       return res.status(201).json({
         record: savedRecord
@@ -55,51 +40,163 @@ export default async function handler(req, res) {
   }
 }
 
-async function enqueueWrite(record) {
-  const operation = writeQueue.catch(() => {}).then(async () => {
-    const records = await readRecords();
-    const savedRecord = {
-      id: createId(),
-      createdAt: new Date().toISOString(),
-      ...record
-    };
+async function readRecords(limit) {
+  const pool = await getTestDbPool();
+  const [recordRows] = await pool.query(
+    `
+      SELECT
+        id,
+        DATE_FORMAT(test_date, '%Y-%m-%d') AS date,
+        model,
+        gb,
+        order_code AS orderCode,
+        note,
+        final_status AS finalStatus,
+        ok_count AS okCount,
+        red_count AS redCount,
+        created_at AS createdAt
+      FROM test_records
+      ORDER BY created_at DESC
+      LIMIT ?
+    `,
+    [limit]
+  );
 
-    const nextRecords = [
-      savedRecord,
-      ...records
-    ].slice(0, maxRecords);
+  if (!recordRows.length) {
+    return [];
+  }
 
-    await fs.mkdir(dataDir, {
-      recursive: true
-    });
+  const recordIds = recordRows.map((record) => record.id);
+  const [itemRows] = await pool.query(
+    `
+      SELECT
+        record_id AS recordId,
+        name,
+        result,
+        extra
+      FROM test_record_items
+      WHERE record_id IN (?)
+      ORDER BY record_id, item_order
+    `,
+    [recordIds]
+  );
 
-    await fs.writeFile(
-      dbPath,
-      `${JSON.stringify(nextRecords, null, 2)}\n`,
-      'utf8'
-    );
+  const itemsByRecordId = new Map();
 
-    return savedRecord;
-  });
-
-  writeQueue = operation.catch(() => {});
-
-  return operation;
-}
-
-async function readRecords() {
-  try {
-    const raw = await fs.readFile(dbPath, 'utf8');
-    const records = JSON.parse(raw);
-
-    return Array.isArray(records) ? records : [];
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      return [];
+  itemRows.forEach((item) => {
+    if (!itemsByRecordId.has(item.recordId)) {
+      itemsByRecordId.set(item.recordId, []);
     }
 
+    itemsByRecordId.get(item.recordId).push({
+      name: item.name,
+      result: item.result,
+      extra: item.extra
+    });
+  });
+
+  return recordRows.map((record) => ({
+    ...record,
+    note: record.note || '',
+    createdAt: formatDateTime(record.createdAt),
+    items: itemsByRecordId.get(record.id) || []
+  }));
+}
+
+async function saveRecord(record) {
+  const pool = await getTestDbPool();
+  const connection = await pool.getConnection();
+  const savedRecord = {
+    id: createId(),
+    createdAt: new Date().toISOString(),
+    ...record
+  };
+
+  try {
+    await connection.beginTransaction();
+
+    await connection.query(
+      `
+        INSERT INTO test_records (
+          id,
+          test_date,
+          model,
+          gb,
+          order_code,
+          note,
+          final_status,
+          ok_count,
+          red_count,
+          created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        savedRecord.id,
+        normalizeSqlDate(savedRecord.date),
+        savedRecord.model,
+        savedRecord.gb,
+        savedRecord.orderCode,
+        savedRecord.note,
+        savedRecord.finalStatus,
+        savedRecord.okCount,
+        savedRecord.redCount,
+        formatSqlDateTime(savedRecord.createdAt)
+      ]
+    );
+
+    const itemValues = savedRecord.items.map((item, index) => [
+      savedRecord.id,
+      index + 1,
+      item.name,
+      item.result,
+      item.extra
+    ]);
+
+    await connection.query(
+      `
+        INSERT INTO test_record_items (
+          record_id,
+          item_order,
+          name,
+          result,
+          extra
+        )
+        VALUES ?
+      `,
+      [itemValues]
+    );
+
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
     throw error;
+  } finally {
+    connection.release();
   }
+
+  await trimOldRecords();
+
+  return savedRecord;
+}
+
+async function trimOldRecords() {
+  const pool = await getTestDbPool();
+
+  await pool.query(
+    `
+      DELETE FROM test_records
+      WHERE id NOT IN (
+        SELECT id FROM (
+          SELECT id
+          FROM test_records
+          ORDER BY created_at DESC
+          LIMIT ?
+        ) AS latest_records
+      )
+    `,
+    [maxRecords]
+  );
 }
 
 function normalizeRecord(body = {}) {
@@ -156,4 +253,20 @@ function createId() {
     Date.now().toString(36),
     Math.random().toString(36).slice(2, 10)
   ].join('-');
+}
+
+function normalizeSqlDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+}
+
+function formatSqlDateTime(value) {
+  return new Date(value).toISOString().slice(0, 23).replace('T', ' ');
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return '';
+  }
+
+  return new Date(value).toISOString();
 }
